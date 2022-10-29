@@ -13,3 +13,4 @@ int main() {
 	glutDisplayFunc(display);
 	glutMainLoop();
 }
+
