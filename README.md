@@ -30,6 +30,4 @@
       - 项目框架
         - 类
         - 库
-
-
-test
+      - Blender教程: https://www.bilibili.com/video/BV1US4y1N7xN/?spm_id_from=333.337.search-card.all.click&vd_source=42469ed2a0c6055aefd1e11b81cbe001
