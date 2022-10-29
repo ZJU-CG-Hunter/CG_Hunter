@@ -121,7 +121,7 @@ void ObjLoader::Draw()
 	}
 	glEnd();
 }
-ObjLoader monkey = ObjLoader("monkey.obj");
+ObjLoader monkey = ObjLoader("./source/monkey.obj");
 /*void display(void)
 {
 	glClearColor(1.0, 0.0, 0.0, 0.0);
