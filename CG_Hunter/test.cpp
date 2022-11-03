@@ -1,11 +1,12 @@
 #pragma once
+//#include <GLAD/glad.h>
 #include <vector>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <math.h>
-#include <glut.h>
+#include <GLUT/glut.h>
 
 using namespace std;
 
@@ -121,12 +122,12 @@ void ObjLoader::Draw()
 	}
 	glEnd();
 }
-ObjLoader monkey = ObjLoader("./source/monkey.obj");
+ObjLoader monkey = ObjLoader("./source/lefthand.obj");
 /*void display(void)
-{
 	glClearColor(1.0, 0.0, 0.0, 0.0);
 	glDepthFunc(GL_LESS);
 	glEnable(GL_DEPTH_TEST);
+{
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);//œÒÀÿ¥´ ‰
 	//setLight();//‰÷»æπ‚’’
 	monkey.Draw();
