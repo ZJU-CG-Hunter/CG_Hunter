@@ -57,7 +57,7 @@
   - HObject类定义并实现渲染物体的方法，需要调用上述动作接口
     - draw()
   - HObject类实现辅助方法
-    - 以任一点为圆心
+    - 物体绕过任一点的任一轴旋转任意角度
 
 - 王欣辰/ 刘志坚 实现 HPig : public HObject类 / HHunter: public HObject类 
 
@@ -69,7 +69,7 @@
     - step()
     - slow()
 
-  - 进试模型
+  - 测试模型
 
     
 
