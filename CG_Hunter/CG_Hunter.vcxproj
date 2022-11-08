@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -19,14 +19,21 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="test.h" />
+    <ClInclude Include="HMesh.h" />
+    <ClInclude Include="include\HCamera.h" />
+    <ClInclude Include="include\HModel.h" />
+    <ClInclude Include="include\HShader.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="glad.c" />
-    <ClCompile Include="glfw_glad_test.cpp" />
-    <ClCompile Include="test.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
+    <None Include="resources\shader\fs\1.model_loading.frag" />
+    <None Include="resources\shader\fs\6.model.frag" />
+    <None Include="resources\shader\fs\6.skybox.frag" />
+    <None Include="resources\shader\vs\1.model_loading.vert" />
+    <None Include="resources\shader\vs\6.model.vert" />
+    <None Include="resources\shader\vs\6.skybox.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="learning\skybox.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -104,7 +111,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>./lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glut32.lib;glut.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glut32.lib;glut.lib;glfw3.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -129,10 +136,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>./include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>./lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;glfw3.lib;glad.lib;stb.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -143,6 +153,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>./include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
