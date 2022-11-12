@@ -9,6 +9,9 @@
 #include <HCamera.h>
 #include <HModel.h>
 
+#include <ft2build.h>
+#include FT_FREETYPE_H  
+
 #include <iostream>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -79,13 +82,13 @@ int main()
 
   // build and compile shaders
   // -------------------------
-  HShader ourShader("./resources/shader/vs/6.model.vert", "./resources/shader/fs/6.model.frag");
+  HShader ourShader("./resources/shader/vs/model.vert", "./resources/shader/fs/6.model.frag");
   HShader skyboxShader("./resources/shader/vs/6.skybox.vert", "./resources/shader/fs/6.skybox.frag");
 
 
   // load models
   // -----------
-  HModel ourModel("./resources/model/nanosuit/nanosuit.obj");
+  HModel ourModel("./resources/model/test/test.obj");
 
   float skyboxVertices[] = {
     // positions          

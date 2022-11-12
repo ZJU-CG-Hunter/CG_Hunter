@@ -17,13 +17,13 @@
     <ClInclude Include="include\HShader.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="HMesh.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="include\HCamera.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="include\HModel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HMesh.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -46,10 +46,19 @@
     <None Include="resources\shader\fs\1.model_loading.frag">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="resources\shader\vs\c03_texture.vs">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="learning\skybox.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="resources\shader\vs\model.vert">
+      <Filter>资源文件</Filter>
+    </Page>
   </ItemGroup>
 </Project>
