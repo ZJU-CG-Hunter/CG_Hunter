@@ -24,7 +24,11 @@
 #include <vector>
 using namespace std;
 
+#define MAX_BONES     200
+#define MAX_ANIMATIONS  20
+
 unsigned int TextureFromFile(const char* path, const string& directory, bool gamma = false);
+void show_mat4(glm::mat4 mat, string mat_name);
 
 struct BoneData {
   glm::mat4 bone_offset;
@@ -49,10 +53,16 @@ private:
   vector<HMesh>   meshes; 
   string directory;
   bool gammaCorrection;
+
   map<string, unsigned int> bone_map;
+  vector<map<string, unsigned int>> channels_map;
+
   vector<BoneData> bones;
   glm::mat4 inverse_root_matrix;
+
+  Assimp::Importer importer;
   const aiScene* scene;
+  
   int animation_index = -1;
 
 
@@ -66,14 +76,7 @@ public:
   // draws the model, and thus all its meshes
   void Draw(HShader& shader)
   {
-    setBoneTransform_ini(static_cast<float>(glfwGetTime()));
- 
-    string uniform_bone("bone[]");
-    for (int i = 0; i < bones.size(); i++) {
-
-      uniform_bone = uniform_bone.insert(5, to_string(i));
-      shader.setMat4(uniform_bone, bones[i].bone_transform);
-    }
+    setBoneTransform_ini(static_cast<float>(glfwGetTime()), shader);
 
     for (unsigned int i = 0; i < meshes.size(); i++)
       meshes[i].Draw(shader);
@@ -91,9 +94,12 @@ private:
   void loadModel(string const& path)
   {
     // read file via ASSIMP
-    Assimp::Importer importer;
     scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 
+    // used for debug
+    cout << "Number of animations: " << scene->mNumAnimations << endl;
+    cout << "Scene Pointer: " << scene << endl;
+    
     // check for errors
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
     {
@@ -105,10 +111,14 @@ private:
     directory = path.substr(0, path.find_last_of('/'));
 
     inverse_root_matrix = aimat_to_glmmat(scene->mRootNode->mTransformation.Inverse());
-    bones.resize(scene->mNumMeshes);
+
+    bones.resize(MAX_BONES);
+    channels_map.resize(MAX_ANIMATIONS);
 
     // process ASSIMP's root node recursively
     processNode(scene->mRootNode);
+    cout << "In loadModel() Animations num: " << scene->mNumAnimations << endl;
+
   }
 
   // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
@@ -136,8 +146,6 @@ private:
     vector<Vertex> vertices;
     vector<unsigned int> indices;
     vector<Texture> textures;
-    vector<BoneData> bones;
-
 
     // walk through each of the mesh's vertices
     for (unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -184,12 +192,19 @@ private:
     }
 
     for (unsigned int i = 0; i < mesh->mNumBones; i++) {
+      
       unsigned int bone_index = 0;
       string bname(mesh->mBones[i]->mName.data);
 
       if (bone_map.find(bname) == bone_map.end()) {
         bone_index = bone_map.size();
         bone_map.emplace(bname, bone_index);
+        for (unsigned int j = 0; j < scene->mNumAnimations; j++) {
+          for (unsigned int k = 0; k < scene->mAnimations[j]->mNumChannels; k++) {
+            if (bname == scene->mAnimations[j]->mChannels[k]->mNodeName.data)
+              channels_map[j].emplace(bname, k);
+          }
+        }
       }
       else
         bone_index = bone_map[bname];
@@ -272,9 +287,14 @@ private:
     return textures;
   }
 
-  void setBoneTransform_ini(float time_in_seconds) {
+  void setBoneTransform_ini(float time_in_seconds, HShader& shader) {
     if (animation_index < 0)
       return;
+    
+    // used for debug 
+    //cout << "In draw() Animations num: " << scene->mNumAnimations << endl;
+    //cout << "In draw() Scene Pointer: " << scene << endl;
+
 
     if (animation_index >= scene->mNumAnimations) {
       cout << "ERROR::SETBONETRANSFORM:: The index: " << animation_index << " is splited.(Number of animations: " << scene->mNumAnimations << ")" << endl;
@@ -285,17 +305,25 @@ private:
     float animation_time = fmod(time_in_ticks, scene->mAnimations[animation_index]->mDuration);
 
     glm::mat4 identity(1.0f);
+    // used for debug
+    // cout << "animation_time: " << animation_time << endl;
     setBoneTransform_recursive(animation_time, scene->mRootNode, identity);
     
+    for (int i = 0; i < bone_map.size(); i++) {
+      string uniform_bone("bone[]");
+      uniform_bone.insert(5, to_string(i));
+      shader.setMat4(uniform_bone, bones[i].bone_transform);
+      //show_mat4(bones[i].bone_transform, "Final_Matrix: ");
+    }
+
     return;
   }
 
   void setBoneTransform_recursive(float animation_time, const aiNode* current_node, const glm::mat4 parent_transform) {
     string node_name(current_node->mName.data);
-    const aiAnimation* current_animation = scene->mAnimations[animation_index];
     glm::mat4 node_transform(aimat_to_glmmat(current_node->mTransformation));
 
-    const aiNodeAnim* current_node_anim = findNodeAnim(current_animation, node_name);
+    const aiNodeAnim* current_node_anim = findNodeAnim(node_name);
 
     if (current_node_anim) {
       // Interpolate scaling and generate scaling transformation matrix
@@ -303,39 +331,51 @@ private:
       CalcInterpolatedScaling(Scaling, animation_time, current_node_anim);
       glm::mat4 ScalingM(1.0f);
       ScalingM = glm::scale(ScalingM, glm::vec3(Scaling.x, Scaling.y, Scaling.z));
-      
+      // debug
+       //show_mat4(ScalingM, "ScalingM: ");
+
       // Interpolate rotation and generate rotation transformation matrix
       aiQuaternion Rotation;
       CalcInterpolatedRotation(Rotation, animation_time, current_node_anim);
       glm::mat4 RotationM(aimat_to_glmmat(Rotation.GetMatrix()));
+      // debug
+      //show_mat4(RotationM, "RotationM: ");
 
       // Interpolate translation and generate translation transformation matrix
       aiVector3D Translation;
       CalcInterpolatedPosition(Translation, animation_time, current_node_anim);
       glm::mat4 TranslationM(1.0f);
+      //cout << Translation.x << ":::" << Translation.y << ":::" << Translation.z << endl;
       TranslationM = glm::translate(TranslationM, glm::vec3(Translation.x, Translation.y, Translation.z));
+      // debug
+      //show_mat4(TranslationM, "TranslationM: ");
 
       node_transform = TranslationM * RotationM * ScalingM;
+      // debug
+       //show_mat4(node_transform, "Node_Transform: ");
     }
 
     glm::mat4 GlobalTransformation = parent_transform * node_transform;
+    // debug
+     //show_mat4(GlobalTransformation, "GlobalTransformation: ");
 
     if (bone_map.find(node_name) != bone_map.end()) {
       unsigned int bone_index = bone_map[node_name];
       bones[bone_index].bone_transform = inverse_root_matrix * GlobalTransformation * bones[bone_index].bone_offset;
+      //show_mat4(bones[bone_index].bone_offset, "bones[bone_index].bone_offset: ");
+      //show_mat4(bones[bone_index].bone_transform, "bones[bone_index].bone_transform: ");
+
     }
 
     for (unsigned int i = 0; i < current_node->mNumChildren; i++)
-      setBoneTransform_recursive(animation_time, current_node, GlobalTransformation);
+      setBoneTransform_recursive(animation_time, current_node->mChildren[i], GlobalTransformation);
   }
 
-  const aiNodeAnim* findNodeAnim(const aiAnimation* current_animation, string node_name) {
-    for (int i = 0; i < current_animation->mNumChannels; i++) {
-      if (node_name == current_animation->mChannels[i]->mNodeName.data)
-        return current_animation->mChannels[i];
-    }
-    cout << "ERROR::FINDNODEANIM:: Failed to find node: " << node_name << endl;
-    return nullptr;
+  const aiNodeAnim* findNodeAnim(string node_name) {
+    if (channels_map[animation_index].find(node_name) == channels_map[animation_index].end())
+      return nullptr;
+    
+    return scene->mAnimations[animation_index]->mChannels[channels_map[animation_index][node_name]];
   }
 
   void CalcInterpolatedScaling(aiVector3D& Scaling, float animation_time, const aiNodeAnim* current_node_anim) {
@@ -345,16 +385,16 @@ private:
     }
 
     unsigned int scaling_index = findScaling(animation_time, current_node_anim);
-    unsigned int next_scaling_index = scaling_index + 1;
+
+    unsigned int next_scaling_index = (scaling_index == current_node_anim->mNumScalingKeys - 1) ? scaling_index : scaling_index + 1;
 
     float delta_time = current_node_anim->mScalingKeys[next_scaling_index].mTime - current_node_anim->mScalingKeys[scaling_index].mTime;
-    float factor = (animation_time - current_node_anim->mScalingKeys[scaling_index].mTime) / delta_time;
+    float factor = next_scaling_index == scaling_index? 0: (animation_time - current_node_anim->mScalingKeys[scaling_index].mTime) / delta_time;
     assert(factor >= 0.0f && factor <= 1.0f);
     const aiVector3D start_scaling(current_node_anim->mScalingKeys[scaling_index].mValue);
     const aiVector3D end_scaling(current_node_anim->mScalingKeys[next_scaling_index].mValue);
     
     Interpolate(Scaling, start_scaling, end_scaling, factor);
-    Scaling = Scaling.Normalize();
   }
 
   void CalcInterpolatedRotation(aiQuaternion& quaterntion, float animation_time, const aiNodeAnim* current_node_anim) {
@@ -364,10 +404,9 @@ private:
     }
 
     unsigned int rotation_index = findRotation(animation_time, current_node_anim);
-    unsigned int next_rotation_index = rotation_index + 1;
-
+    unsigned int next_rotation_index = (rotation_index == current_node_anim->mNumRotationKeys - 1) ? rotation_index: rotation_index + 1;
     float delta_time = current_node_anim->mRotationKeys[next_rotation_index].mTime - current_node_anim->mRotationKeys[rotation_index].mTime;
-    float factor = (animation_time - current_node_anim->mRotationKeys[rotation_index].mTime) / delta_time;
+    float factor = next_rotation_index == rotation_index? 0: (animation_time - current_node_anim->mRotationKeys[rotation_index].mTime) / delta_time;
     assert(factor >= 0.0f && factor <= 1.0f);
     const aiQuaternion start_rotation(current_node_anim->mRotationKeys[rotation_index].mValue);
     const aiQuaternion end_rotation(current_node_anim->mRotationKeys[next_rotation_index].mValue);
@@ -383,16 +422,19 @@ private:
     }
 
     unsigned int translation_index = findtranslation(animation_time, current_node_anim);
-    unsigned int next_translation_index = translation_index + 1;
+    unsigned int next_translation_index = translation_index == current_node_anim->mNumPositionKeys - 1 ? translation_index : translation_index + 1;
 
     float delta_time = current_node_anim->mPositionKeys[next_translation_index].mTime - current_node_anim->mPositionKeys[translation_index].mTime;
-    float factor = (animation_time - current_node_anim->mPositionKeys[translation_index].mTime) / delta_time;
+    float factor = next_translation_index == translation_index? 0: (animation_time - current_node_anim->mPositionKeys[translation_index].mTime) / delta_time;
     assert(factor >= 0.0f && factor <= 1.0f);
     const aiVector3D start_translation(current_node_anim->mPositionKeys[translation_index].mValue);
     const aiVector3D end_translation(current_node_anim->mPositionKeys[next_translation_index].mValue);
+    // debug
+    //cout << "start_translation: " << current_node_anim->mPositionKeys[translation_index].mValue.x << ", " << current_node_anim->mPositionKeys[translation_index].mValue.y << ", " << current_node_anim->mPositionKeys[translation_index].mValue.z << endl;
+    //cout << "end_translation: " << current_node_anim->mPositionKeys[next_translation_index].mValue.x << ", " << current_node_anim->mPositionKeys[next_translation_index].mValue.y << ", " << current_node_anim->mPositionKeys[next_translation_index].mValue.z << endl;
 
     Interpolate(Translation, start_translation, end_translation, factor);
-    Translation = Translation.Normalize();
+    //Interpolate(Translation, aiVector3D(0.0f), end_translation - start_translation, factor);
   }
 
   unsigned int findScaling(float animation_time, const aiNodeAnim* current_node_anim) {
@@ -405,9 +447,7 @@ private:
       if (animation_time < (float)current_node_anim->mScalingKeys[i + 1].mTime)
         return i;
 
-    cout << "ERROR::FINDSCALING:: animation_time splited(animation_time: " << animation_time << ", last_time: "
-      << (float)current_node_anim->mScalingKeys[current_node_anim->mNumScalingKeys - 1].mTime << endl;
-    assert(0);
+    return current_node_anim->mNumScalingKeys-1;
   }
 
   unsigned int findRotation(float animation_time, const aiNodeAnim* current_node_anim) {
@@ -420,9 +460,7 @@ private:
       if (animation_time < (float)current_node_anim->mRotationKeys[i + 1].mTime)
         return i;
 
-    cout << "ERROR::FINDROTATION:: animation_time splited(animation_time: " << animation_time << ", last_time: "
-      << (float)current_node_anim->mRotationKeys[current_node_anim->mNumRotationKeys - 1].mTime << endl;
-    assert(0);
+    return current_node_anim->mNumRotationKeys - 1;
   }
 
   unsigned int findtranslation(float animation_time, const aiNodeAnim* current_node_anim) {
@@ -435,9 +473,7 @@ private:
       if (animation_time < (float)current_node_anim->mPositionKeys[i + 1].mTime)
         return i;
 
-    cout << "ERROR::FINDROTATION:: animation_time splited(animation_time: " << animation_time << ", last_time: "
-      << (float)current_node_anim->mPositionKeys[current_node_anim->mNumPositionKeys - 1].mTime << endl;
-    assert(0);
+    return current_node_anim->mNumPositionKeys-1;
   }
 
 
@@ -453,19 +489,20 @@ private:
   }
 
   glm::mat4 aimat_to_glmmat(aiMatrix4x4 ai_matrix) {
-    glm::vec4 row1(ai_matrix.a1, ai_matrix.a2, ai_matrix.a3, ai_matrix.a4);
-    glm::vec4 row2(ai_matrix.b1, ai_matrix.b2, ai_matrix.b3, ai_matrix.b4);
-    glm::vec4 row3(ai_matrix.c1, ai_matrix.c2, ai_matrix.c3, ai_matrix.c4);
-    glm::vec4 row4(ai_matrix.d1, ai_matrix.d2, ai_matrix.d3, ai_matrix.d4);
+    glm::vec4 col1(ai_matrix.a1, ai_matrix.b1, ai_matrix.c1, ai_matrix.d1);
+    glm::vec4 col2(ai_matrix.a2, ai_matrix.b2, ai_matrix.c2, ai_matrix.d2);
+    glm::vec4 col3(ai_matrix.a3, ai_matrix.b3, ai_matrix.c3, ai_matrix.d3);
+    glm::vec4 col4(ai_matrix.a4, ai_matrix.b4, ai_matrix.c4, ai_matrix.d4);
 
-    glm::mat4 ret(row1, row2, row3, row4);
+    glm::mat4 ret(col1, col2, col3, col4);
+    //show_mat4(ret, "Ret_Matrix");
     return ret;
   }
 
   glm::mat4 aimat_to_glmmat(aiMatrix3x3 ai_matrix) {
-    glm::vec4 row1(ai_matrix.a1, ai_matrix.a2, ai_matrix.a3, 0.0f);
-    glm::vec4 row2(ai_matrix.b1, ai_matrix.b2, ai_matrix.b3, 0.0f);
-    glm::vec4 row3(ai_matrix.c1, ai_matrix.c2, ai_matrix.c3, 0.0f);
+    glm::vec4 row1(ai_matrix.a1, ai_matrix.b1, ai_matrix.c1, 0.0f);
+    glm::vec4 row2(ai_matrix.a2, ai_matrix.b2, ai_matrix.c2, 0.0f);
+    glm::vec4 row3(ai_matrix.a3, ai_matrix.b3, ai_matrix.c3, 0.0f);
     glm::vec4 row4(0.0f,         0.0f        , 0.0f        , 1.0f);
 
     glm::mat4 ret(row1, row2, row3, row4);
@@ -513,5 +550,16 @@ unsigned int TextureFromFile(const char* path, const string& directory, bool gam
   }
 
   return textureID;
+}
+
+// Used for debug
+void show_mat4(glm::mat4 mat, string mat_name) {
+  cout << endl << mat_name;
+  for (int i = 0; i < 4; i++) {
+    cout << endl;
+    for (int j = 0; j < 4; j++)
+      cout << mat[i][j] << ", ";
+  }
+
 }
 #endif

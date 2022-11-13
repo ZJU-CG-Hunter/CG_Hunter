@@ -35,7 +35,8 @@ struct Vertex {
 
   void addBone(int bone_index, float weight) {
     m_BoneIDs[num_bones] = bone_index;
-    m_Weights[num_bones++] = weight;
+    m_Weights[num_bones] = weight;
+    num_bones++;
   }
 };
 

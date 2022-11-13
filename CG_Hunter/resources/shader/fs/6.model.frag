@@ -16,6 +16,6 @@ void main()
     vec3 R = reflect(I, normalize(Normal));
     float rate = 0.6;
     FragColor = vec4(rate*texture(skybox, R).rgb+(1.0-rate)*texture(texture_diffuse1, TexCoords).rgb , 1.0);
-    //FragColor = vec4(texture(skybox, R).rgb, 1.0);
+    //FragColor = vec4(0.0, 0.0, 1.0, 1.0);
 
 }
