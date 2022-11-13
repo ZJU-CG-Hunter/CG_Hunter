@@ -20,23 +20,35 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\def.h" />
     <ClInclude Include="include\HCamera.h" />
+    <ClInclude Include="include\HEngine.h" />
+    <ClInclude Include="include\HMap.h" />
     <ClInclude Include="include\HMesh.h" />
     <ClInclude Include="include\HModel.h" />
     <ClInclude Include="include\HShader.h" />
+    <ClInclude Include="include\HSkybox.h" />
+    <ClInclude Include="include\utility.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="resources\shader\fs\1.model_loading.frag" />
-    <None Include="resources\shader\fs\6.model.frag" />
-    <None Include="resources\shader\fs\6.skybox.frag" />
-    <None Include="resources\shader\vs\1.model_loading.vert" />
-    <None Include="resources\shader\vs\6.model.vert" />
-    <None Include="resources\shader\vs\6.skybox.vert" />
-    <None Include="resources\shader\vs\c03_texture.vs" />
+    <None Include="resources\shader\fs\model.frag" />
+    <None Include="resources\shader\fs\skybox.frag" />
+    <None Include="resources\shader\vs\skybox.vert" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="learning\main.cpp" />
+    <ClCompile Include="learning\main.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\HAnimation.cpp" />
+    <ClCompile Include="src\HEngine.cpp" />
+    <ClCompile Include="src\HMap.cpp" />
+    <ClCompile Include="src\HModel.cpp" />
+    <ClCompile Include="src\HSkybox.cpp" />
+    <ClCompile Include="src\main.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\utility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Page Include="resources\shader\vs\model.vert">
@@ -150,7 +162,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>./lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mtd.lib;glfw3.lib;glad.lib;stb.lib;freetyped.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;glfw3.lib;stb.lib;freetyped.lib;glad.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

@@ -62,3 +62,7 @@ struct Vertex {
 
 - aiMesh应至少包含了以下信息位置、法向量、纹理坐标，实际上aiMesh也包含了一个aiBone的数组
 - aiBone即骨架，其中包含了name，vertexweight(所有与该bone关联的vertex的对应权重)
+
+
+
+需要检测的物体 碰撞类型 

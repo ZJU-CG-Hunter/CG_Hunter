@@ -1,6 +1,4 @@
 #pragma once
-#ifndef MESH_H
-#define MESH_H
 
 #include <glad/glad.h> // holds all OpenGL type declarations
 
@@ -11,9 +9,11 @@
 
 #include <string>
 #include <vector>
+#include <def.h>
+
 using namespace std;
 
-#define MAX_BONE_INFLUENCE 4
+#define MAX_BONE_INFLUENCE 6
 
 struct Vertex {
   // position
@@ -69,7 +69,7 @@ public:
   }
 
   // render the mesh
-  void Draw(HShader& shader)
+  void Draw(HShader* shader)
   {
     // bind appropriate textures
     unsigned int diffuseNr = 1;
@@ -78,6 +78,9 @@ public:
     unsigned int heightNr = 1;
     for (unsigned int i = 0; i < textures.size(); i++)
     {
+      // The defalut skybox id GL_TEXTRUE15 is left for skybox texture
+      if (i == SKYBOX_ID)
+        continue;
       glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
       // retrieve texture number (the N in diffuse_textureN)
       string number;
@@ -92,7 +95,7 @@ public:
         number = std::to_string(heightNr++); // transfer unsigned int to string
 
       // now set the sampler to the correct texture unit
-      glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
+      glUniform1i(glGetUniformLocation(shader->ID, (name + number).c_str()), i);
       // and finally bind the texture
       glBindTexture(GL_TEXTURE_2D, textures[i].id);
     }
@@ -160,4 +163,3 @@ private:
     glBindVertexArray(0);
   }
 };
-#endif
