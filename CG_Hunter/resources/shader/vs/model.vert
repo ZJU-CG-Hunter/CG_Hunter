@@ -1,4 +1,4 @@
-﻿#version 330 core
+﻿#version 460 core
 layout (location = 0) in vec3  aPos;
 layout (location = 1) in vec3  aNormal;
 layout (location = 2) in vec2  aTexCoords;
@@ -13,12 +13,15 @@ out vec3 Normal;
 out vec3 Position;
 out vec2 TexCoords;
 
-const int MAX_BONES = 200;
+const int MAX_BONES = 500;
 
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-uniform mat4 bone[MAX_BONES];
+layout (std140, binding = 0) uniform Matrices
+{
+  mat4 model;
+  mat4 projection;
+  mat4 view;
+  mat4 bones[MAX_BONES];
+};
 
 void main()
 {
@@ -26,7 +29,7 @@ void main()
     if(aNumOfBones > 0){
       BoneTransform = mat4(0.0f);
       for(int i = 0; i < aNumOfBones; i++){
-        BoneTransform += bone[aBoneIDs[i]] * aWeights[i];
+        BoneTransform += bones[aBoneIDs[i]] * aWeights[i];
       }
     }
 

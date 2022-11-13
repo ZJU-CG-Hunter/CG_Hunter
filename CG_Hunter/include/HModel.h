@@ -12,9 +12,11 @@
 #include <ASSIMP/Importer.hpp>
 #include <ASSIMP/scene.h>
 #include <ASSIMP/postprocess.h>
+#include <glm/gtc/quaternion.hpp>
 
 #include <HMesh.h>
 #include <HShader.h>
+#include <HCamera.h>
 
 #include <string>
 #include <fstream>
@@ -24,8 +26,14 @@
 #include <vector>
 using namespace std;
 
-#define MAX_BONES     200
+#define MAX_BONES    500
 #define MAX_ANIMATIONS  20
+#define MATRIX_BUFFER_SIZE 64
+#define MATRIX_UNIFROM_BUFFER_SIZE (MATRIX_BUFFER_SIZE)*(3+(MAX_BONES))
+
+const unsigned int SCR_WIDTH = 1200;
+const unsigned int SCR_HEIGHT = 800;
+
 
 unsigned int TextureFromFile(const char* path, const string& directory, bool gamma = false);
 void show_mat4(glm::mat4 mat, string mat_name);
@@ -59,17 +67,27 @@ private:
 
   vector<BoneData> bones;
   glm::mat4 inverse_root_matrix;
+  unsigned int matrix_buffer_id;
+  int animation_index = -1;
 
   Assimp::Importer importer;
   const aiScene* scene;
-  
-  int animation_index = -1;
 
+  glm::vec3 position;
+  glm::quat rotation;
+  glm::vec3 scaling;
+  
+  HCamera* camera;
 
 public:
   // constructor, expects a filepath to a 3D model.
-  HModel(string const& path, bool gamma = false) : gammaCorrection(gamma)
+  HModel(string const& path, HCamera* pcamera = nullptr, bool gamma = false) : gammaCorrection(gamma), camera(pcamera)
   {
+    glGenBuffers(1, &matrix_buffer_id);
+    glBindBuffer(GL_UNIFORM_BUFFER, matrix_buffer_id);
+    glBufferData(GL_UNIFORM_BUFFER, MATRIX_UNIFROM_BUFFER_SIZE, NULL, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, matrix_buffer_id);
     loadModel(path);
   }
 
@@ -78,6 +96,31 @@ public:
   {
     setBoneTransform_ini(static_cast<float>(glfwGetTime()), shader);
 
+    shader.use();
+    glBindBuffer(GL_UNIFORM_BUFFER, matrix_buffer_id);
+    unsigned int buffer_offset = 0;
+
+    // Bind WVP
+    glm::mat4 identity(1.0f);
+    glm::mat4 model = glm::translate(identity, position) * glm::mat4_cast(rotation) * glm::scale(identity, scaling);
+    BindUniformData(buffer_offset, &model);
+
+    // Bind projection and view
+    glm::mat4 perspective = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    glm::mat4 view = camera->GetViewMatrix();
+    BindUniformData(buffer_offset, &perspective);
+    BindUniformData(buffer_offset, &view);
+
+    // Bind bones
+    for (unsigned int i = 0; i < bone_map.size(); i++) 
+      BindUniformData(buffer_offset, &bones[i].bone_transform);
+  
+    //Optimize Test
+    //vector<glm::mat4&> test_vec;
+    //for (unsigned int i = 0; i < bone_map.size(); i++)
+    //  test_vec.push_back(bones[i].bone_transform);
+    //glBufferSubData(GL_UNIFORM_BUFFER, buffer_offset, bone_map.size()*MATRIX_BUFFER_SIZE, &test_vec);
+
     for (unsigned int i = 0; i < meshes.size(); i++)
       meshes[i].Draw(shader);
   }
@@ -85,6 +128,22 @@ public:
   void SetAnimation(int aidx) {
     animation_index = aidx;
     return;
+  }
+
+  void SetCamera(HCamera* pcamera) {
+    camera = pcamera; 
+  }
+
+  void SetPosition(const glm::vec3& position_vec) {
+    position = position_vec;
+  }
+
+  void SetRotation(const glm::quat& rotation_quat) {
+    rotation = rotation_quat;
+  }
+
+  void SetScaling(const glm::vec3& scaling_vec) {
+    scaling = scaling_vec;
   }
 
 
@@ -134,6 +193,7 @@ private:
       //meshes.push_back(processMesh(mesh, scene));
     }
     // after we've processed all of the meshes (if any) we then recursively process each of the children nodes
+    //cout << "Number of children: " << node->mNumChildren << endl;
     for (unsigned int i = 0; i < node->mNumChildren; i++)
     {
       processNode(node->mChildren[i]);
@@ -209,10 +269,26 @@ private:
       else
         bone_index = bone_map[bname];
 
-      bones.at(bone_index) = BoneData(aimat_to_glmmat(mesh->mBones[i]->mOffsetMatrix));
+      //cout << "bone_index: " << bone_index << endl;
 
+      // Check if size is big enough
+      if (bone_index >= bones.size())
+        bones.resize(bones.size() * 2);
+
+      bones.at(bone_index) = BoneData(aimat_to_glmmat(mesh->mBones[i]->mOffsetMatrix));
+ 
+
+      //cout << "vectices_size: " << vertices.size() << endl;
+      //cout << "number of weights: " << mesh->mBones[i]->mNumWeights << endl;
+      if (mesh->mBones[i]->mNumWeights == 2546) {
+        cout << "stop" << endl;
+      }
       for (unsigned int j = 0; j < mesh->mBones[i]->mNumWeights; j++) {
         int vertex_index = mesh->mBones[i]->mWeights[j].mVertexId;
+        //cout << "vertex_index: " << vertex_index << endl;
+        if (vertex_index < 0 || vertex_index >= vertices.size())
+          cout << "vertex_index: " << vertex_index << endl;
+        
         float bone_weight = mesh->mBones[i]->mWeights[j].mWeight;
         vertices[vertex_index].addBone(bone_index, bone_weight);
       }
@@ -309,13 +385,6 @@ private:
     // cout << "animation_time: " << animation_time << endl;
     setBoneTransform_recursive(animation_time, scene->mRootNode, identity);
     
-    for (int i = 0; i < bone_map.size(); i++) {
-      string uniform_bone("bone[]");
-      uniform_bone.insert(5, to_string(i));
-      shader.setMat4(uniform_bone, bones[i].bone_transform);
-      //show_mat4(bones[i].bone_transform, "Final_Matrix: ");
-    }
-
     return;
   }
 
@@ -507,6 +576,17 @@ private:
 
     glm::mat4 ret(row1, row2, row3, row4);
     return ret;
+  }
+
+  void BindUniformData(unsigned int& buffer_offset, glm::mat4* mat) {
+    Adjustoffset(buffer_offset, MATRIX_BUFFER_SIZE);
+    glBufferSubData(GL_UNIFORM_BUFFER, buffer_offset, MATRIX_BUFFER_SIZE, mat);
+    buffer_offset += MATRIX_BUFFER_SIZE;
+  }
+
+  void Adjustoffset(unsigned int& buffer_offset, unsigned int base_offset) {
+    unsigned int space = buffer_offset % base_offset;
+    buffer_offset += (space == 0 ? 0 : base_offset - space);
   }
 
 };

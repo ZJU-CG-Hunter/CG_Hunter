@@ -21,9 +21,9 @@ void processInput(GLFWwindow* window);
 unsigned int loadCubemap(vector<std::string> faces);
 
 
-// settings
-const unsigned int SCR_WIDTH = 1200;
-const unsigned int SCR_HEIGHT = 800;
+//// settings
+//const unsigned int SCR_WIDTH = 1200;
+//const unsigned int SCR_HEIGHT = 800;
 
 // camera
 HCamera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -85,10 +85,9 @@ int main()
   HShader ourShader("./resources/shader/vs/model.vert", "./resources/shader/fs/6.model.frag");
   HShader skyboxShader("./resources/shader/vs/6.skybox.vert", "./resources/shader/fs/6.skybox.frag");
 
-
   // load models
   // -----------
-  HModel ourModel("./resources/model/test/test2.fbx");
+  HModel ourModel("./resources/model/nanosuit2.fbx", &camera);
 
   float skyboxVertices[] = {
     // positions          
@@ -184,27 +183,17 @@ int main()
     glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // don't forget to enable shader before setting uniforms
-    ourShader.use();
-
-    // view/projection transformations
-    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-    glm::mat4 view = camera.GetViewMatrix();
-    ourShader.setMat4("projection", projection);
-    ourShader.setMat4("view", view);
-
     // render the loaded model
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-    model = glm::scale(model, glm::vec3(0.001f, 0.001f, 0.001f));	// it's a bit too big for our scene, so scale it down
-    ourShader.setMat4("model", model);
+    ourModel.SetPosition(glm::vec3(0.0f, -10.0f, -5.0f));
+    ourModel.SetScaling(glm::vec3(0.01f, 0.01f, 0.01f));
     ourModel.SetAnimation(0);
     ourModel.Draw(ourShader);
 
     // draw skybox as last
     glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
     skyboxShader.use();
-    view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // remove translation from the view matrix
+    glm::mat4 view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // remove translation from the view matrix
+    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
     skyboxShader.setMat4("view", view);
     skyboxShader.setMat4("projection", projection);
     // skybox cube
