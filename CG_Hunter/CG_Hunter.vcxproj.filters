@@ -1,10 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="源文件">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
     <Filter Include="头文件">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
@@ -13,21 +9,56 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{b7ce3c08-21a9-489f-8ea1-0e1a50d8a581}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="test.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="glad.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="glfw_glad_test.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="test.h">
+    <ClInclude Include="include\HShader.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="include\HCamera.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HModel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HMesh.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="resources\shader\vs\6.model.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resources\shader\vs\6.skybox.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resources\shader\fs\6.model.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resources\shader\fs\6.skybox.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resources\shader\vs\1.model_loading.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resources\shader\fs\1.model_loading.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resources\shader\vs\c03_texture.vs">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="learning\skybox.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="resources\shader\vs\model.vert">
+      <Filter>资源文件</Filter>
+    </Page>
   </ItemGroup>
 </Project>
