@@ -106,6 +106,7 @@ public:
   void SetScaling(const glm::vec3& scaling_vec);
 
 private:
+  void genModelBuffer();
 
   // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
   void loadModel(string const& path);

@@ -3,11 +3,15 @@
 // constructor, expects a filepath to a 3D model.
 HModel::HModel(string const& path, bool gamma, float width, float length) : gammaCorrection(gamma), model_width(width), model_length(length)
 {
-  glGenBuffers(1, &matrix_buffer_id);
-  glBindBuffer(GL_UNIFORM_BUFFER, matrix_buffer_id);
-  glBufferData(GL_UNIFORM_BUFFER, MATRIX_UNIFROM_BUFFER_SIZE, NULL, GL_DYNAMIC_DRAW);
-  glBindBuffer(GL_UNIFORM_BUFFER, 0);
+  genModelBuffer();
   loadModel(path);
+  // 计算边界框
+  for (int i = 0; i < meshes.size(); i++) 
+    for (int j = 0; j < meshes[i].vertices.size(); j++) {
+      cout << "点的x坐标 " << meshes[i].vertices[j].Position.x << endl;
+      cout << "点的y坐标 " << meshes[i].vertices[j].Position.y << endl;
+      cout << "点的z坐标 " << meshes[i].vertices[j].Position.z << endl;
+  }
 }
 
 HModel::~HModel() {
@@ -545,3 +549,11 @@ unsigned int HModel::TextureFromFile(const char* path, const string& directory, 
 
   return textureID;
 }
+
+void HModel::genModelBuffer() {
+  glGenBuffers(1, &matrix_buffer_id);
+  glBindBuffer(GL_UNIFORM_BUFFER, matrix_buffer_id);
+  glBufferData(GL_UNIFORM_BUFFER, MATRIX_UNIFROM_BUFFER_SIZE, NULL, GL_DYNAMIC_DRAW);
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
