@@ -14,6 +14,7 @@
 #include <HMesh.h>
 #include <HShader.h>
 #include <HCamera.h>
+#include <HCollider.h>
 #include <utility.h>
 
 #include <string>
@@ -73,6 +74,9 @@ private:
   const aiScene* scene;
   Assimp::Importer* importer;
 
+  HShader* shader;
+  HCamera* camera;
+
   int animation_index;
   float animation_ticks;
 
@@ -80,24 +84,27 @@ private:
   glm::quat rotation;
   glm::vec3 scaling;
 
-  float model_width;
-  float model_length;
-
+  vector<HCollider*> colliders;
+ 
   Model_Type model_type;
 
 public:
   // constructor, expects a filepath to a 3D model.
-  HModel(string const& path, bool gamma, float width, float length);
+  HModel(string const& path, bool gamma);
 
   ~HModel();
   // draws the model, and thus all its meshes
-  void Draw(HShader* shader, HCamera* camera);
+  void Draw();
+
+  void BindShader(HShader* model_shader);
+
+  void BindCamera(HCamera* model_camera);
+
+  void BindShaderUniformBuffer(int binding_point);
 
   virtual void Action(HMap* map, float duration_time);
 
   virtual void Event(Event_Type event_type, HModel* another_model);
-
-  void BindShader(int binding_point);
 
   void SetPosition(const glm::vec3& position_vec);
 
@@ -107,6 +114,9 @@ public:
 
 private:
   void genModelBuffer();
+
+  void genColliders();
+
 
   // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
   void loadModel(string const& path);

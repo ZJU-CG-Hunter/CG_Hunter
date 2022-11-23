@@ -22,10 +22,13 @@
   <ItemGroup>
     <ClInclude Include="include\def.h" />
     <ClInclude Include="include\HCamera.h" />
+    <ClInclude Include="include\HCollider.h" />
     <ClInclude Include="include\HEngine.h" />
     <ClInclude Include="include\HMap.h" />
     <ClInclude Include="include\HMesh.h" />
-    <ClInclude Include="include\HModel.h" />
+    <ClInclude Include="include\HModel.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="include\HShader.h" />
     <ClInclude Include="include\HSkybox.h" />
     <ClInclude Include="include\utility.h" />
@@ -37,13 +40,13 @@
     <None Include="resources\shader\vs\skybox.vert" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="learning\main.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="src\HAnimation.cpp" />
+    <ClCompile Include="src\HCollider.cpp" />
     <ClCompile Include="src\HEngine.cpp" />
     <ClCompile Include="src\HMap.cpp" />
-    <ClCompile Include="src\HModel.cpp" />
+    <ClCompile Include="src\HModel.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\HSkybox.cpp" />
     <ClCompile Include="src\main.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>

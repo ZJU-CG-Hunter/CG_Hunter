@@ -41,6 +41,9 @@
     <ClInclude Include="include\HMap.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="include\HCollider.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shader\vs\skybox.vert">
@@ -67,9 +70,6 @@
     <ClCompile Include="src\utility.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="learning\main.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\HAnimation.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -77,6 +77,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\HMap.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HCollider.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\源.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

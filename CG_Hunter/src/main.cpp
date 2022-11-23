@@ -36,16 +36,20 @@ int main() {
 	engine->insert_shader("./resources/shader/vs/skybox.vert", "./resources/shader/fs/skybox.frag");
 
 	/* Create new models */
-	engine->insert_model("./resources/model/nanosuit2.fbx", false, 10, 10);
-	engine->get_model(0)->SetScaling(glm::vec3(0.01, 0.01, 0.01));
-
-	/* Set binding point */
-	engine->set_model_matrix_bindpoint(0, 1);
+	engine->insert_model("./resources/model/nanosuit2.fbx", false);
+	engine->get_model(0)->SetScaling(glm::vec3(0.01, 0.01, 0.01)); // Set model scaling
 
 	/* Create new skybox */
 	engine->insert_skybox(default_skyboxvertices, default_skyboxfaces);
-  engine->set_skybox(0);
+	engine->set_skybox(0);
 
+	/* Set binding */
+	engine->get_model(0)->BindShader(engine->get_shader(0));
+	engine->get_model(0)->BindCamera(engine->get_camera(0));
+	engine->set_model_matrix_bindpoint(0, 1);
+	engine->get_skybox(0)->BindShader(engine->get_shader(1));
+	engine->get_skybox(0)->BindCamera(engine->get_camera(0));
+	
 	engine->run();
 
 	engine->terminate();

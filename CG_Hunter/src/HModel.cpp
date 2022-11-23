@@ -1,17 +1,11 @@
 #include <HModel.h>
 
 // constructor, expects a filepath to a 3D model.
-HModel::HModel(string const& path, bool gamma, float width, float length) : gammaCorrection(gamma), model_width(width), model_length(length)
+HModel::HModel(string const& path, bool gamma) : gammaCorrection(gamma)
 {
   genModelBuffer();
   loadModel(path);
-  // 计算边界框
-  for (int i = 0; i < meshes.size(); i++) 
-    for (int j = 0; j < meshes[i].vertices.size(); j++) {
-      cout << "点的x坐标 " << meshes[i].vertices[j].Position.x << endl;
-      cout << "点的y坐标 " << meshes[i].vertices[j].Position.y << endl;
-      cout << "点的z坐标 " << meshes[i].vertices[j].Position.z << endl;
-  }
+  genColliders();
 }
 
 HModel::~HModel() {
@@ -22,7 +16,7 @@ HModel::~HModel() {
   delete scene;
 }
 // draws the model, and thus all its meshes
-void HModel::Draw(HShader* shader, HCamera* camera)
+void HModel::Draw()
 {
   setBoneTransform_ini(shader);
 
@@ -66,7 +60,7 @@ void HModel::Event(Event_Type event_type, HModel* another_model) {
 }
 
 
-void HModel::BindShader(int binding_point) {
+void HModel::BindShaderUniformBuffer(int binding_point) {
   glBindBufferBase(GL_UNIFORM_BUFFER, binding_point, matrix_buffer_id);
 }
 
@@ -115,6 +109,15 @@ void HModel::loadModel(string const& path)
   cout << "In loadModel() Animations num: " << scene->mNumAnimations << endl;
 
 }
+
+void HModel::BindShader(HShader* model_shader) {
+  shader = model_shader;
+}
+
+void HModel::BindCamera(HCamera* model_camera) {
+  camera = model_camera;
+}
+
 
 // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
 void HModel::processNode(aiNode* node)
@@ -556,4 +559,26 @@ void HModel::genModelBuffer() {
   glBufferData(GL_UNIFORM_BUFFER, MATRIX_UNIFROM_BUFFER_SIZE, NULL, GL_DYNAMIC_DRAW);
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
+
+void HModel::genColliders() {
+  HCollider* collider;
+  vector<vector<float>> m;
+  for (int i = 0; i < meshes.size(); i++) {
+    vector<vector<float>> v;
+    for (int j = 0; j < meshes[i].vertices.size(); j++) {
+      vector<float> temp;
+      temp.push_back(meshes[i].vertices[j].Position.x);
+      temp.push_back(meshes[i].vertices[j].Position.y);
+      temp.push_back(meshes[i].vertices[j].Position.z);
+
+      v.push_back(temp);
+      m.push_back(temp);
+    }
+    collider = new HCollider(v);
+    colliders.emplace_back(collider);
+  }
+  collider = new HCollider(m);
+  colliders.emplace_back(collider);
+}
+
 

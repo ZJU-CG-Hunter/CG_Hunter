@@ -11,8 +11,11 @@ void HMap::insert_model(HModel* model) {
 	float model_center_x = model->position.x, model_center_y = model->position.y;
 	int map_x = 0, map_y = 0;
 	int sign_x[4] = { 1, 1, -1, -1 }, sign_y[4] = { 1, -1, 1, -1 };
+	glm::mat3x2 board = model->colliders[model->colliders.size() - 1]->get_board();
+	float model_length = fabs(board[0][0] - board[0][1]);
+	float model_width = fabs(board[2][0] - board[2][1]);
 	for (int i = 0; i < 4; i++) {
-		get_point_position(model_center_x + sign_x[i] * model->model_length / 2, model_center_y + sign_y[i] * model->model_width / 2, map_x, map_y);
+		get_point_position(model_center_x + sign_x[i] * model_length / 2, model_center_y + sign_y[i] * model_width / 2, map_x, map_y);
 		_map[map_x][map_y].insert(model);
 	}
 }
@@ -21,8 +24,11 @@ void HMap::remove_model(HModel* model) {
 	float model_center_x = model->position.x, model_center_y = model->position.y;
 	int map_x = 0, map_y = 0;
 	int sign_x[4] = { 1, 1, -1, -1 }, sign_y[4] = { 1, -1, 1, -1 };
+	glm::mat3x2 board = model->colliders[model->colliders.size() - 1]->get_board();
+	float model_length = fabs(board[0][0] - board[0][1]);
+	float model_width = fabs(board[2][0] - board[2][1]);
 	for (int i = 0; i < 4; i++) {
-		get_point_position(model_center_x + sign_x[i] * model->model_length / 2, model_center_y + sign_y[i] * model->model_width / 2, map_x, map_y);
+		get_point_position(model_center_x + sign_x[i] * model_length / 2, model_center_y + sign_y[i] * model_width / 2, map_x, map_y);
 		_map[map_x][map_y].erase(model);
 	}
 }
@@ -32,8 +38,11 @@ set<HModel*> HMap::get_model_nearby(HModel* model) {
 	int map_x = 0, map_y = 0;
 	int sign_x[4] = { 1, 1, -1, -1 }, sign_y[4] = { 1, -1, 1, -1 };
 	set<HModel*> ret_set;
+	glm::mat3x2 board = model->colliders[model->colliders.size() - 1]->get_board();
+	float model_length = fabs(board[0][0] - board[0][1]);
+	float model_width = fabs(board[2][0] - board[2][1]);
 	for (int i = 0; i < 4; i++) {
-		get_point_position(model_center_x + sign_x[i] * model->model_length / 2, model_center_y + sign_y[i] * model->model_width / 2, map_x, map_y);
+		get_point_position(model_center_x + sign_x[i] * model_length / 2, model_center_y + sign_y[i] * model_width / 2, map_x, map_y);
 		ret_set.insert(_map[map_x][map_y].begin(), _map[map_x][map_y].end());
 	}
 	return ret_set;

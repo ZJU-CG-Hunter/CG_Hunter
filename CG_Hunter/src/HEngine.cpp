@@ -107,7 +107,7 @@ void HEngine::insert_skybox(vector<float>& skyboxvertices, vector<string>& skybo
 }
 
 void HEngine::set_skybox(int skybox_index, string skybox_name) {
-	check_splited(skybox_index, _cameras);
+	check_splited(skybox_index, _skybox);
 
 	_current_skybox = skybox_index;
 
@@ -118,11 +118,17 @@ void HEngine::set_skybox(int skybox_index, string skybox_name) {
 	}
 
 	return;
-
 }
 
-void HEngine::insert_model(string const& path, bool gamma, float width, float length) {
-	HModel* created_model = new HModel(path, gamma, width, length);
+HSkybox* HEngine::get_skybox(int skybox_index) {
+	check_splited(skybox_index, _skybox);
+
+	return _skybox[skybox_index];
+}
+
+
+void HEngine::insert_model(string const& path, bool gamma) {
+	HModel* created_model = new HModel(path, gamma);
 
 	_models.emplace_back(created_model);
 
@@ -138,7 +144,7 @@ HModel* HEngine::get_model(int model_index) {
 
 void HEngine::set_model_matrix_bindpoint(int model_index, int binding_point) {
 	check_splited(model_index, _models);
-	_models[model_index]->BindShader(binding_point);
+	_models[model_index]->BindShaderUniformBuffer(binding_point);
 
 	return;
 }
@@ -181,16 +187,15 @@ void HEngine::run() {
 		for (unsigned int i = 0; i < _models.size(); i++)
 			_models[i]->Action(_map, _deltatime);
 
-
 		/* clear */
 		clear_buffer();
 
 		/* render model */
 		for (unsigned int i = 0; i < _models.size(); i++) 
-			_models[i]->Draw(_shaders[0], _cameras[0]);
+			_models[i]->Draw();
 	
 		/* render skybox */
-		_skybox[_current_skybox]->Draw(_shaders[1], _cameras[0]);
+		_skybox[_current_skybox]->Draw();
 
 		/* swap buffers and poll IO events */
 		glfwSwapBuffers(_windows[_current_window]);

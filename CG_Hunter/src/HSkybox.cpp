@@ -5,15 +5,15 @@ HSkybox::HSkybox(vector<float>& skyboxvertices, vector<string>& skyboxfaces) : _
 	loadskybox();
 }	
 
-void HSkybox::Draw(HShader* shader, HCamera* camera) {
+void HSkybox::Draw() {
 	glDepthFunc(GL_LEQUAL); // change depth function so depth test passes when values are equal to depth buffer's content
-	shader->use();
+	_shader->use();
 	glBindBuffer(GL_UNIFORM_BUFFER, _skybox_buffer_id);
 	unsigned int buffer_offset = 0;
 
 	// Bind projection and view
-	glm::mat4 perspective = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-	glm::mat4 view = glm::mat4(glm::mat3(camera->GetViewMatrix()));
+	glm::mat4 perspective = glm::perspective(glm::radians(_camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+	glm::mat4 view = glm::mat4(glm::mat3(_camera->GetViewMatrix()));
 	BindUniformData(buffer_offset, &perspective);
 	BindUniformData(buffer_offset, &view);
 
@@ -25,6 +25,15 @@ void HSkybox::Draw(HShader* shader, HCamera* camera) {
 	glBindVertexArray(0);
 	glDepthFunc(GL_LESS); // set depth function back to default
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
+
+void HSkybox::BindShader(HShader* shader){
+	_shader = shader;
+}
+
+void HSkybox::BindCamera(HCamera* camera) {
+	_camera = camera;
 }
 
 void HSkybox::bindbuffer() {

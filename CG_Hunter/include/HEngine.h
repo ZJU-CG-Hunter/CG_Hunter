@@ -79,7 +79,7 @@ public:
 	/* Return the reference of the shader according to the index */
 	HShader* get_shader(int shader_index);
 
-	void insert_model(string const& path, bool gamma, float width, float length);
+	void insert_model(string const& path, bool gamma);
 
 	HModel* get_model(int model_index);
 
@@ -101,6 +101,9 @@ public:
 
 	/* Set the current skybox */
 	void set_skybox(int skybox_index, string skybox_name = "skybox");
+
+	/* Get the skybox */
+	HSkybox* get_skybox(int skybox_index);
 
 	/* process all input */
 	virtual void processInput();

@@ -24,9 +24,17 @@ private:
   unsigned int _skyboxVBO;
   unsigned int _skyboxtexture;
 
+  HShader* _shader;
+  HCamera* _camera;
+
 public:
   HSkybox(vector<float>& skyboxvertices, vector<string>& skyboxfaces);
-  void Draw(HShader* shader, HCamera* camera);
+
+  void Draw();
+
+  void BindShader(HShader* shader);
+
+  void BindCamera(HCamera* camera);
 
 private:
   void bindbuffer();
