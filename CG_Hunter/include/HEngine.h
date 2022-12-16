@@ -48,6 +48,11 @@ protected:
 	float _lasttime;
 	float _currenttime;
 
+	// THe mouse info of the engine
+	float _lastX;
+	float _lastY;
+	bool _firstMouse;
+
 public:
 	/* Constructor of the Engine */
 	HEngine();
@@ -104,6 +109,18 @@ public:
 
 	/* Get the skybox */
 	HSkybox* get_skybox(int skybox_index);
+
+	/* Get the current mouse info */
+	void get_mouse_xy(float& lastX, float& lastY);
+
+	/* Set the current mouse info */
+	void set_mouse_xy(float lastX, float lastY);
+
+	/* Return is mouse first appeared */
+	bool is_firstmouse();
+
+	/* Set firstmosue */
+	void set_firstmouse(bool firstMouse);
 
 	/* process all input */
 	virtual void processInput();

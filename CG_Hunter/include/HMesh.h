@@ -6,6 +6,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <HShader.h>
+#include <HCollider.h>
 
 #include <string>
 #include <vector>
@@ -46,7 +47,15 @@ struct Texture {
   string path;
 };
 
+struct MeshBone {
+  int bone_index;
+  float weights;
 
+  MeshBone(int mbone_index, float mweights) {
+    bone_index = mbone_index;
+    weights = mweights;
+  }
+};
 
 class HMesh {
 public:
@@ -56,13 +65,23 @@ public:
   vector<Texture>      textures;
   unsigned int VAO;
 
+  // collider used for detecting collision
+  HCollider* ini_collider;
+  glm::mat4 mesh_transform_mat;
+  vector<MeshBone> mesh_bone;
+ 
+  // mesh name
+  string mesh_name;
 
   // constructor
-  HMesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures) 
+  HMesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures, HCollider* ini_collider, vector<MeshBone> mesh_bone, string mesh_name = "Unknown")
   {
     this->vertices = vertices;
     this->indices = indices;
     this->textures = textures;
+    this->ini_collider = ini_collider;
+    this->mesh_bone = mesh_bone;
+    this->mesh_name = mesh_name;
 
     // now that we have all the required data, set the vertex buffers and its attribute pointers.
     setupMesh();

@@ -5,7 +5,6 @@ HModel::HModel(string const& path, bool gamma) : gammaCorrection(gamma)
 {
   genModelBuffer();
   loadModel(path);
-  genColliders();
 }
 
 HModel::~HModel() {
@@ -18,8 +17,6 @@ HModel::~HModel() {
 // draws the model, and thus all its meshes
 void HModel::Draw()
 {
-  setBoneTransform_ini(shader);
-
   shader->use();
   glBindBuffer(GL_UNIFORM_BUFFER, matrix_buffer_id);
   unsigned int buffer_offset = 0;
@@ -47,7 +44,24 @@ void HModel::Draw()
     meshes[i].Draw(shader);
 }
 
+
+void HModel::UpdateColliderTransform() {
+  glm::mat4 identity(1.0f);
+  glm::mat4 model = glm::translate(identity, position) * glm::mat4_cast(rotation) * glm::scale(identity, scaling);
+
+  for (int i = 0; i < meshes.size(); i++) {
+    meshes[i].mesh_transform_mat = glm::mat4(0.0f);
+    for (int j = 0; j < meshes[i].mesh_bone.size(); j++) {
+      meshes[i].mesh_transform_mat += bones[meshes[i].mesh_bone[j].bone_index].bone_transform * meshes[i].mesh_bone[j].weights;
+    }
+    meshes[i].mesh_transform_mat *= model;
+  }
+}
+
+
 void HModel::Action(HMap* map, float duration_time) {
+  setBoneTransform_ini(shader);
+
   cout << "Not implemented, always set animation as 0" << endl;
   animation_index = 0;
   float animation_duration = scene->mAnimations[animation_index]->mDuration;
@@ -141,10 +155,15 @@ void HModel::processNode(aiNode* node)
 
 HMesh HModel::processMesh(aiMesh* mesh)
 {
+  string mesh_name(mesh->mName.C_Str());
+
   // data to fill
   vector<Vertex> vertices;
   vector<unsigned int> indices;
   vector<Texture> textures;
+  HCollider* mesh_ini_collider;
+  vector<MeshBone> mesh_bone;
+  float weight_sum = 0.0f;
 
   // walk through each of the mesh's vertices
   for (unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -190,6 +209,19 @@ HMesh HModel::processMesh(aiMesh* mesh)
     vertices.push_back(vertex);
   }
 
+  // generate the collider
+  vector<vector<float>> v;
+  for (int i = 0; i < vertices.size(); i++) {
+    vector<float> temp;
+    temp.push_back(vertices[i].Position.x);
+    temp.push_back(vertices[i].Position.y);
+    temp.push_back(vertices[i].Position.z);
+
+    v.push_back(temp);
+  }
+  mesh_ini_collider = new HCollider(v);
+
+
   for (unsigned int i = 0; i < mesh->mNumBones; i++) {
 
     unsigned int bone_index = 0;
@@ -207,6 +239,7 @@ HMesh HModel::processMesh(aiMesh* mesh)
     }
     else
       bone_index = bone_map[bname];
+    mesh_bone.emplace_back(MeshBone(bone_index, 0.0f));
 
     //cout << "bone_index: " << bone_index << endl;
 
@@ -219,9 +252,6 @@ HMesh HModel::processMesh(aiMesh* mesh)
 
     //cout << "vectices_size: " << vertices.size() << endl;
     //cout << "number of weights: " << mesh->mBones[i]->mNumWeights << endl;
-    if (mesh->mBones[i]->mNumWeights == 2546) {
-      cout << "stop" << endl;
-    }
     for (unsigned int j = 0; j < mesh->mBones[i]->mNumWeights; j++) {
       int vertex_index = mesh->mBones[i]->mWeights[j].mVertexId;
       //cout << "vertex_index: " << vertex_index << endl;
@@ -230,44 +260,46 @@ HMesh HModel::processMesh(aiMesh* mesh)
 
       float bone_weight = mesh->mBones[i]->mWeights[j].mWeight;
       vertices[vertex_index].addBone(bone_index, bone_weight);
+      mesh_bone[i].weights += bone_weight;
+      weight_sum += bone_weight;
     }
   }
-
-    // now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
-    for (unsigned int i = 0; i < mesh->mNumFaces; i++)
-    {
-      aiFace face = mesh->mFaces[i];
-      // retrieve all indices of the face and store them in the indices vector
-      for (unsigned int j = 0; j < face.mNumIndices; j++)
-        indices.push_back(face.mIndices[j]);
-    }
-    // process materials
-    aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-    // we assume a convention for sampler names in the shaders. Each diffuse texture should be named
-    // as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER. 
-    // Same applies to other texture as the following list summarizes:
-    // diffuse: texture_diffuseN
-    // specular: texture_specularN
-    // normal: texture_normalN
-
-    // 1. diffuse maps
-    vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-    textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-    // 2. specular maps
-    vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-    textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-    // 3. normal maps
-    std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-    textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-    // 4. height maps
-    std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
-    textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
-
-
-
-    // return a mesh object created from the extracted mesh data
-    return HMesh(vertices, indices, textures);
+  for (int i = 0; i < mesh_bone.size(); i++)
+    mesh_bone[i].weights /= weight_sum;
+  
+  // now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
+  for (unsigned int i = 0; i < mesh->mNumFaces; i++)
+  {
+    aiFace face = mesh->mFaces[i];
+    // retrieve all indices of the face and store them in the indices vector
+    for (unsigned int j = 0; j < face.mNumIndices; j++)
+      indices.push_back(face.mIndices[j]);
   }
+  // process materials
+  aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+  // we assume a convention for sampler names in the shaders. Each diffuse texture should be named
+  // as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER. 
+  // Same applies to other texture as the following list summarizes:
+  // diffuse: texture_diffuseN
+  // specular: texture_specularN
+  // normal: texture_normalN
+
+  // 1. diffuse maps
+  vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+  textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+  // 2. specular maps
+  vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
+  textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+  // 3. normal maps
+  std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
+  textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+  // 4. height maps
+  std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
+  textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+
+  // return a mesh object created from the extracted mesh data
+  return HMesh(vertices, indices, textures, mesh_ini_collider, mesh_bone, mesh_name);
+}
 
   // checks all material textures of a given type and loads the textures if they're not loaded yet.
   // the required info is returned as a Texture struct.
@@ -560,25 +592,5 @@ void HModel::genModelBuffer() {
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-void HModel::genColliders() {
-  HCollider* collider;
-  vector<vector<float>> m;
-  for (int i = 0; i < meshes.size(); i++) {
-    vector<vector<float>> v;
-    for (int j = 0; j < meshes[i].vertices.size(); j++) {
-      vector<float> temp;
-      temp.push_back(meshes[i].vertices[j].Position.x);
-      temp.push_back(meshes[i].vertices[j].Position.y);
-      temp.push_back(meshes[i].vertices[j].Position.z);
-
-      v.push_back(temp);
-      m.push_back(temp);
-    }
-    collider = new HCollider(v);
-    colliders.emplace_back(collider);
-  }
-  collider = new HCollider(m);
-  colliders.emplace_back(collider);
-}
 
 

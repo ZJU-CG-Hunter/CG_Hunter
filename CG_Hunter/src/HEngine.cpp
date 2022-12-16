@@ -1,7 +1,7 @@
 #include <HEngine.h>
 
 
-HEngine::HEngine(): _deltatime(0.0f), _lasttime(0.0f) , _current_window(-1) {
+HEngine::HEngine(): _deltatime(0.0f), _lasttime(0.0f) , _current_window(-1), _lastX(SCR_WIDTH / 2.0f), _lastY(SCR_HEIGHT / 2.0f), _firstMouse(true) {
 	ini_window_setting();
 	ini_stb_setting();
 	ini_enging_setting();
@@ -149,6 +149,28 @@ void HEngine::set_model_matrix_bindpoint(int model_index, int binding_point) {
 	return;
 }
 
+/* Get the current mouse info */
+void HEngine::get_mouse_xy(float& lastX, float& lastY) {
+	lastX = _lastX;
+	lastY = _lastY;
+}
+
+/* Set the current mouse info */
+void HEngine::set_mouse_xy(float lastX, float lastY) {
+	_lastX = lastX;
+	_lastY = lastY;
+}
+
+/* Return is mouse first appeared */
+bool HEngine::is_firstmouse() {
+	return _firstMouse;
+}
+
+/* Set firstmosue */
+void HEngine::set_firstmouse(bool firstMouse) {
+	_firstMouse = firstMouse;
+}
+
 
 void HEngine::processInput() {
 	GLFWwindow* window = _windows[_current_window];
@@ -183,9 +205,13 @@ void HEngine::run() {
 		/* input */
 		processInput();
 
-		/* action */
+		/* auto action */
 		for (unsigned int i = 0; i < _models.size(); i++)
 			_models[i]->Action(_map, _deltatime);
+
+		/* event: collision */
+		for (unsigned int i = 0; i < _models.size(); i++)
+			_models[i]->UpdateColliderTransform();
 
 		/* clear */
 		clear_buffer();

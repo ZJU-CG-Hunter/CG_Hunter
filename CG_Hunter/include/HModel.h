@@ -14,7 +14,7 @@
 #include <HMesh.h>
 #include <HShader.h>
 #include <HCamera.h>
-#include <HCollider.h>
+#include <HMap.h>
 #include <utility.h>
 
 #include <string>
@@ -84,8 +84,6 @@ private:
   glm::quat rotation;
   glm::vec3 scaling;
 
-  vector<HCollider*> colliders;
- 
   Model_Type model_type;
 
 public:
@@ -93,6 +91,10 @@ public:
   HModel(string const& path, bool gamma);
 
   ~HModel();
+
+  // update collider transformation matrix
+  void UpdateColliderTransform();
+
   // draws the model, and thus all its meshes
   void Draw();
 
@@ -115,8 +117,7 @@ public:
 private:
   void genModelBuffer();
 
-  void genColliders();
-
+  HCollider* genColliders(aiMesh* mesh);
 
   // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
   void loadModel(string const& path);

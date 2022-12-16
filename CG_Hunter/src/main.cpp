@@ -2,10 +2,6 @@
 
 HEngine* engine;
 
-float lastX = SCR_WIDTH / 2.0f;
-float lastY = SCR_HEIGHT / 2.0f;
-bool firstMouse = true;
-
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
@@ -69,19 +65,19 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 	float xpos = static_cast<float>(xposIn);
 	float ypos = static_cast<float>(yposIn);
 
-	if (firstMouse)
+	if (engine->is_firstmouse())
 	{
-		lastX = xpos;
-		lastY = ypos;
-		firstMouse = false;
+		engine->set_mouse_xy(xpos, ypos);
+		engine->set_firstmouse(false);
 	}
+	
+	float lastX = 0, lastY = 0;
+	engine->get_mouse_xy(lastX, lastY);
 
 	float xoffset = xpos - lastX;
 	float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
 
-	lastX = xpos;
-	lastY = ypos;
-
+	engine->set_mouse_xy(xpos, ypos);
 	engine->get_camera(engine->current_camera_index())->ProcessMouseMovement(xoffset, yoffset);
 }
 
