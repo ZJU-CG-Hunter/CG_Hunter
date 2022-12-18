@@ -8,19 +8,33 @@ HCollider::HCollider(vector<vector<float>> v)
 	Eigen::MatrixXd m = calcmaxormin(v, feture);
 	for (int i = 0; i < 3; i++)
 		for (int j = 0; j < 3; j++)
-			_feature[i][j] = feture(i, j);
+			_feature[i][j] = feture(j, i);
 
 	for (int i = 0; i < 3; i++)
 		for (int j = 0; j < 2; j++)
 			_board[i][j] = m(i, j);
+
+	CalPoints();
+}
+void HCollider::CalPoints()
+{
+	GLfloat temp = 0;
+	for (size_t i = 0; i < 8; i++)
+	{
+		for (size_t j = 0; j < 3; j++) {
+			temp = _feature[0][j] * _board[0][i % 2] + _feature[1][j] * _board[1][(i >> 1) % 2] + _feature[2][j] * _board[2][(i >> 2) % 2];
+
+			_Points[i][j] = temp;
+		}
+	}
 }
 
-glm::mat3x3 HCollider::get_feature()
+glm::vec3* HCollider::get_feature()
 {
 	return _feature;
 }
 
-glm::mat3x2 HCollider::get_board()
+glm::vec2* HCollider::get_board()
 {
 	return _board;
 }

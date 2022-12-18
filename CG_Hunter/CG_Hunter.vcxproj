@@ -24,6 +24,7 @@
     <ClInclude Include="include\HCamera.h" />
     <ClInclude Include="include\HCollider.h" />
     <ClInclude Include="include\HEngine.h" />
+    <ClInclude Include="include\HHunter.h" />
     <ClInclude Include="include\HMap.h" />
     <ClInclude Include="include\HMesh.h" />
     <ClInclude Include="include\HModel.h">
@@ -35,14 +36,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="resources\shader\fs\map.frag" />
     <None Include="resources\shader\fs\model.frag" />
     <None Include="resources\shader\fs\skybox.frag" />
+    <None Include="resources\shader\vs\map.vert" />
+    <None Include="resources\shader\vs\model.vert" />
     <None Include="resources\shader\vs\skybox.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\HAnimation.cpp" />
     <ClCompile Include="src\HCollider.cpp" />
     <ClCompile Include="src\HEngine.cpp" />
+    <ClCompile Include="src\HHunter.cpp" />
     <ClCompile Include="src\HMap.cpp" />
     <ClCompile Include="src\HModel.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -52,11 +57,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\utility.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Page Include="resources\shader\vs\model.vert">
-      <SubType>Designer</SubType>
-    </Page>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -165,7 +165,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>./lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mtd.lib;glfw3.lib;stb.lib;freetyped.lib;glad.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;glfw3.lib;stb.lib;freetyped.lib;glad.lib;opencv_world454d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

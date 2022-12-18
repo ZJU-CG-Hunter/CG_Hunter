@@ -1,10 +1,12 @@
 #include <HModel.h>
+#include <HMap.h>
 
 // constructor, expects a filepath to a 3D model.
 HModel::HModel(string const& path, bool gamma) : gammaCorrection(gamma)
 {
   genModelBuffer();
   loadModel(path);
+  //genModelCollider();
 }
 
 HModel::~HModel() {
@@ -56,17 +58,41 @@ void HModel::UpdateColliderTransform() {
     }
     meshes[i].mesh_transform_mat *= model;
   }
+
+  /* 大盒子 */
 }
 
 
 void HModel::Action(HMap* map, float duration_time) {
   setBoneTransform_ini(shader);
 
-  cout << "Not implemented, always set animation as 0" << endl;
-  animation_index = 0;
-  float animation_duration = scene->mAnimations[animation_index]->mDuration;
-  float animation_ticks_per_second = scene->mAnimations[animation_index]->mTicksPerSecond;
-  animation_ticks = fmod((animation_ticks + duration_time * animation_ticks_per_second), animation_duration);
+  //cout << "Not implemented, always set animation as 0" << endl;
+
+  if(scene->mNumAnimations >0){
+    animation_index = 0;
+    float animation_duration = scene->mAnimations[animation_index]->mDuration;
+    float animation_ticks_per_second = scene->mAnimations[animation_index]->mTicksPerSecond;
+    animation_ticks = fmod((animation_ticks + duration_time * animation_ticks_per_second), animation_duration);
+  }
+  
+  // 始终“踩在”地面上
+  int model_x = (int)(((position.x + Scale_X) / (2 * Scale_X))* x_range);
+  int model_y = (int)(((-position.z + Scale_Y) / (2 * Scale_Y)) * y_range);
+
+  int valid_point_num = 0; 
+  float height_sum = 0;
+  for(int i = -land_x_range; i<= land_x_range; i++)
+    for (int j = -land_y_range; j <= land_y_range; j++) 
+      if (map->get_height(model_x+i, model_y+j) != INVALID_HEIGHT) {
+        //cout << "<" << i << ">" << "<" << j << ">" << map->get_height(model_x+i, model_y+j) << endl;
+        height_sum += map->get_height(model_x+i, model_y+j);
+        valid_point_num++;
+      }
+
+  //cout << "Valid_Num: " << valid_point_num << endl;
+  //cout << "height_sum: " << height_sum << endl;
+  if (valid_point_num > 0)
+    position.y = height_sum / valid_point_num + Y_OFFSET;
 }
 
 void HModel::Event(Event_Type event_type, HModel* another_model) {
@@ -108,7 +134,7 @@ void HModel::loadModel(string const& path)
     return;
   }
 
-  cout << "Test:" << scene->mAnimations[0]->mTicksPerSecond;
+  //cout << "Test:" << scene->mAnimations[0]->mTicksPerSecond;
 
   // retrieve the directory path of the filepath
   directory = path.substr(0, path.find_last_of('/'));
@@ -121,7 +147,6 @@ void HModel::loadModel(string const& path)
   // process ASSIMP's root node recursively
   processNode(scene->mRootNode);
   cout << "In loadModel() Animations num: " << scene->mNumAnimations << endl;
-
 }
 
 void HModel::BindShader(HShader* model_shader) {
@@ -132,6 +157,12 @@ void HModel::BindCamera(HCamera* model_camera) {
   camera = model_camera;
 }
 
+HCollider* HModel::genModelCollider() {
+  // Not implemted
+  vector<vector<float>> v;
+  HCollider* collider = new HCollider(v);
+  return collider;
+}
 
 // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
 void HModel::processNode(aiNode* node)
@@ -174,6 +205,22 @@ HMesh HModel::processMesh(aiMesh* mesh)
     vector.x = mesh->mVertices[i].x;
     vector.y = mesh->mVertices[i].y;
     vector.z = mesh->mVertices[i].z;
+
+    if (first_record) {
+      min_x = max_x = vector.x;
+      min_y = max_y = vector.y;
+      min_z = max_z = vector.z;
+      first_record = false;
+    }
+    else {
+      min_x = min(min_x, vector.x);
+      max_x = max(max_x, vector.x);
+      min_y = min(min_y, vector.y);
+      max_y = max(max_y, vector.y);
+      min_z = min(min_z, vector.z);
+      max_z = max(max_z, vector.z);
+    }
+
     vertex.Position = vector;
     // normals
     if (mesh->HasNormals())
@@ -301,6 +348,15 @@ HMesh HModel::processMesh(aiMesh* mesh)
   return HMesh(vertices, indices, textures, mesh_ini_collider, mesh_bone, mesh_name);
 }
 
+HCollider* HModel::get_collider() {
+  return collider;
+}
+
+vector<HMesh>* HModel::get_meshes() {
+  return &meshes;
+}
+
+
   // checks all material textures of a given type and loads the textures if they're not loaded yet.
   // the required info is returned as a Texture struct.
 vector<Texture> HModel::loadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName)
@@ -343,7 +399,7 @@ void HModel::setBoneTransform_ini(HShader* shader) {
   //cout << "In draw() Scene Pointer: " << scene << endl;
 
   if (animation_index >= scene->mNumAnimations) {
-    cout << "ERROR::SETBONETRANSFORM:: The index: " << animation_index << " is splited.(Number of animations: " << scene->mNumAnimations << ")" << endl;
+    //cout << "ERROR::SETBONETRANSFORM:: The index: " << animation_index << " is splited.(Number of animations: " << scene->mNumAnimations << ")" << endl;
     return;
   }
 

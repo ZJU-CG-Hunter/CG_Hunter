@@ -32,4 +32,28 @@ const int DEFAULT_LEVEL = 4;
 const float DEFAULT_MAP_WIDTH = 1000;
 const float DEFAULT_MAP_LENGTH = 1000;
 
+const float INVALID_HEIGHT = -100000.0f;
 
+const float Scale_X = 100.0f;
+const float Scale_Y = 100.0f;
+const float Scale_Z = 100.0f;
+
+const int x_range = 250;
+const int y_range = 250;
+
+const int land_x_range = 3;
+const int land_y_range = 3;
+
+const float Y_OFFSET = 3.5f;
+
+enum class Events {
+	//like run, stop...
+	type1, type2, type3
+};
+
+struct collides
+{
+	bool if_collide;
+	Events model1_event;
+	Events model2_event;
+};

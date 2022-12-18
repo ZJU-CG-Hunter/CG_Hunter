@@ -12,6 +12,7 @@
 #include <HModel.h>
 #include <HSkybox.h>
 #include <HMap.h>
+#include <HHunter.h>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H  
@@ -28,6 +29,9 @@ protected:
 
 	// The shaders used to render the model
 	vector<HShader*> _shaders;
+
+	// The hunter
+	HHunter* _hunter;
 
 	// The models in the engine
 	vector<HModel*> _models;
@@ -84,6 +88,18 @@ public:
 	/* Return the reference of the shader according to the index */
 	HShader* get_shader(int shader_index);
 
+	/* Create a map */
+	void create_map(string const& path);
+
+	/* Return the map */
+	HMap* get_map();
+
+	/* Create hunter */
+	void create_hunter(string const& path, const glm::vec3 front, const glm::vec3 up, const glm::vec3 right, const glm::vec3 worldup, float yaw, float pitch);
+
+	/* Return the map */
+	HHunter* get_hunter();
+
 	void insert_model(string const& path, bool gamma);
 
 	HModel* get_model(int model_index);
@@ -125,6 +141,16 @@ public:
 	/* process all input */
 	virtual void processInput();
 
+	/* Collide */
+	collides get_collide_type(HModel* model1, HModel* model2);
+
+	bool if_collide(glm::vec3* Points1, glm::vec3* Points2);
+
+	bool inspection_2D(glm::vec2* p1, glm::vec2* p2);
+
+	void model_action(HModel* model, Events model_event);
+
+
 	/* Clear buffer before rendering */
 	virtual void clear_buffer();
 
@@ -133,6 +159,8 @@ public:
 
 	/*  terminate, clearing all previously allocated GLFW resources. */
 	virtual void terminate();
+
+
 
 
 protected:

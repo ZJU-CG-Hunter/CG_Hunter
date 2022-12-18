@@ -14,7 +14,6 @@
 #include <HMesh.h>
 #include <HShader.h>
 #include <HCamera.h>
-#include <HMap.h>
 #include <utility.h>
 
 #include <string>
@@ -58,7 +57,7 @@ class HModel
 {
 friend class HMap;
 
-private:
+protected:
   // model data 
   vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
   vector<HMesh>   meshes; 
@@ -84,7 +83,17 @@ private:
   glm::quat rotation;
   glm::vec3 scaling;
 
+  HCollider* collider;
+
   Model_Type model_type;
+
+  float min_x, max_x;
+  float min_y, max_y;
+  float min_z, max_z;
+
+  bool first_record = true;
+
+  float speed;
 
 public:
   // constructor, expects a filepath to a 3D model.
@@ -108,16 +117,26 @@ public:
 
   virtual void Event(Event_Type event_type, HModel* another_model);
 
+  HCollider* get_collider();
+
+  vector<HMesh>* get_meshes();
+
   void SetPosition(const glm::vec3& position_vec);
 
   void SetRotation(const glm::quat& rotation_quat);
 
   void SetScaling(const glm::vec3& scaling_vec);
 
+  void GetPositionMat();
+
+  void GetRotationMat();
+
+  void GetScalingMat();
+
 private:
   void genModelBuffer();
 
-  HCollider* genColliders(aiMesh* mesh);
+  HCollider* genModelCollider();
 
   // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
   void loadModel(string const& path);

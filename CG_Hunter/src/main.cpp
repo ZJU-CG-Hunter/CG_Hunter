@@ -30,21 +30,34 @@ int main() {
 	/* Create new shaders */
 	engine->insert_shader("./resources/shader/vs/model.vert", "./resources/shader/fs/model.frag");
 	engine->insert_shader("./resources/shader/vs/skybox.vert", "./resources/shader/fs/skybox.frag");
+	engine->insert_shader("./resources/shader/vs/map.vert", "./resources/shader/fs/map.frag");
 
-	/* Create new models */
-	engine->insert_model("./resources/model/nanosuit2.fbx", false);
-	engine->get_model(0)->SetScaling(glm::vec3(0.01, 0.01, 0.01)); // Set model scaling
+
+	/* Create new hunter */
+	engine->create_hunter("./resources/model/cube.fbx", glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.0f);
+	engine->get_hunter()->SetScaling(glm::vec3(0.6f, 0.6f, 0.6f)); // Set model scaling
+	
+	/* Create new map */
+	engine->create_map("./resources/map/map.fbx");
+	engine->get_map()->get_map_model()->SetScaling(glm::vec3(Scale_X, Scale_Y, Scale_Z));
+	engine->get_map()->get_map_model()->SetRotation(glm::quat(glm::highp_vec3(glm::radians(-90.0f), 0.0f, 0.0f)));
+	engine->get_map()->get_map_model()->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+
 
 	/* Create new skybox */
 	engine->insert_skybox(default_skyboxvertices, default_skyboxfaces);
 	engine->set_skybox(0);
 
+
 	/* Set binding */
-	engine->get_model(0)->BindShader(engine->get_shader(0));
-	engine->get_model(0)->BindCamera(engine->get_camera(0));
-	engine->set_model_matrix_bindpoint(0, 1);
+	engine->get_hunter()->BindShader(engine->get_shader(0));
+	engine->get_hunter()->BindCamera(engine->get_camera(0));
+	engine->set_model_matrix_bindpoint(-2, 1);
 	engine->get_skybox(0)->BindShader(engine->get_shader(1));
 	engine->get_skybox(0)->BindCamera(engine->get_camera(0));
+	engine->get_map()->get_map_model()->BindShader(engine->get_shader(2));
+	engine->get_map()->get_map_model()->BindCamera(engine->get_camera(0));
+	engine->set_model_matrix_bindpoint(-1, 2);
 	
 	engine->run();
 
@@ -78,7 +91,8 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 	float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
 
 	engine->set_mouse_xy(xpos, ypos);
-	engine->get_camera(engine->current_camera_index())->ProcessMouseMovement(xoffset, yoffset);
+	
+	engine->get_hunter()->turn(xoffset, yoffset);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)

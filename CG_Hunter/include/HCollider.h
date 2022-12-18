@@ -9,16 +9,19 @@ using namespace std;
 using namespace Eigen;
 class HCollider {
 private:
-	glm::mat3x3 _feature;
-	glm::mat3x2 _board;
+	glm::vec3 _feature[3];
+	glm::vec2 _board[3];
+	glm::vec3 _Points[8];
 public:
 	HCollider(vector<vector<float>> v);
 
-	glm::mat3x3 get_feature();
+	glm::vec3* get_feature();
 
-	glm::mat3x2 get_board();
+	glm::vec2* get_board();
 private:
 	//void generate_board(vector<vector<float>> v);
+
+	void CalPoints();
 
 	Eigen::Matrix3d getcov(vector<vector<float>> v, vector<GLfloat> Point);
 

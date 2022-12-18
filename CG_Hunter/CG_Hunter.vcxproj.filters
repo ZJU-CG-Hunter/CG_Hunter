@@ -44,6 +44,9 @@
     <ClInclude Include="include\HCollider.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="include\HHunter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shader\vs\skybox.vert">
@@ -56,6 +59,15 @@
       <Filter>资源文件</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="resources\shader\vs\model.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resources\shader\vs\map.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resources\shader\fs\map.frag">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\HEngine.cpp">
@@ -82,13 +94,8 @@
     <ClCompile Include="src\HCollider.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\源.cpp">
+    <ClCompile Include="src\HHunter.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Page Include="resources\shader\vs\model.vert">
-      <Filter>资源文件</Filter>
-    </Page>
   </ItemGroup>
 </Project>
