@@ -104,8 +104,6 @@ public:
 
 	HModel* get_model(int model_index);
 
-	void set_model_matrix_bindpoint(int model_index, int binding_point);
-
 	/* Insert a new camera */
 	void insert_camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
 
@@ -142,14 +140,13 @@ public:
 	virtual void processInput();
 
 	/* Collide */
-	collides get_collide_type(HModel* model1, HModel* model2);
+	Collision get_collide_type(HModel* model1, HModel* model2);
 
-	bool if_collide(glm::vec3* Points1, glm::vec3* Points2);
+	bool if_collide(vector<glm::vec3> Points1, vector<glm::vec3> Points2);
 
 	bool inspection_2D(glm::vec2* p1, glm::vec2* p2);
 
-	void model_action(HModel* model, Events model_event);
-
+	void collision_detection();
 
 	/* Clear buffer before rendering */
 	virtual void clear_buffer();
@@ -159,8 +156,6 @@ public:
 
 	/*  terminate, clearing all previously allocated GLFW resources. */
 	virtual void terminate();
-
-
 
 
 protected:

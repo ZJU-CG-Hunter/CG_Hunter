@@ -15,7 +15,7 @@ out vec2 TexCoords;
 
 const int MAX_BONES = 500;
 
-layout (std140, binding = 2) uniform Matrices
+layout (std140) uniform Matrices
 {
   mat4 model;
   mat4 projection;

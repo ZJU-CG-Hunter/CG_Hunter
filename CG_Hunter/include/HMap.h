@@ -7,13 +7,29 @@
 
 using namespace std;
 
+struct Map_Data {
+	float _height;
+
+	vector<HModel*> _models;
+
+	Map_Type _map_type;
+
+	Map_Data(): _height(INVALID_HEIGHT), _map_type(Map_Type::Unkown){}
+};
+
 class HMap {
 private:
+	HModel* _map_model; /* The model of the map */
+	
+	vector<vector<Map_Data>> _map_data;
+
 	float _map_width;
-	float _map_length;
-	vector<vector<set<HModel*>>> _map;
-	HModel* _map_model;
-	float _height_map[x_range+1][y_range+1];
+
+	float _map_height;
+
+	int x_range;
+
+	int y_range;
 
 public:
 	HMap(string const& path);
@@ -26,13 +42,15 @@ public:
 
 	void remove_model(HModel* model);
 
-	set<HModel*> get_model_nearby(HModel* model);
+	void update_model(HModel* model);
 
-	void get_point_position(float x, float y, int& map_x, int& map_y);
+	vector<HModel*> get_model_nearby(HModel* model, float range = DEFALUT_NEARBY_RANGE);
 
-	float get_height(int x, int y);
+	float get_height(float x, float y);
 
 private:
 	void gen_height_map();
+
+	void adjust_map_size();
 
 };

@@ -14,7 +14,7 @@
 
 using namespace std;
 
-#define MAX_BONE_INFLUENCE 6
+#define MAX_BONE_INFLUENCE 10
 
 struct Vertex {
   // position
@@ -28,7 +28,7 @@ struct Vertex {
   // bitangent
   glm::vec3 Bitangent;
   // bone indexes which will influence this vertex
-  int m_BoneIDs[MAX_BONE_INFLUENCE] = {-1, -1, -1, -1};
+  int m_BoneIDs[MAX_BONE_INFLUENCE];
   // weights from each bone
   float m_Weights[MAX_BONE_INFLUENCE];
   // number of bones
@@ -38,6 +38,10 @@ struct Vertex {
     m_BoneIDs[num_bones] = bone_index;
     m_Weights[num_bones] = weight;
     num_bones++;
+    if (num_bones >= MAX_BONE_INFLUENCE) {
+      cout << "ERROR::SPLITED_BONE_INFLUENCE" << endl;
+      assert(0);
+    }
   }
 };
 

@@ -8,6 +8,10 @@ HSkybox::HSkybox(vector<float>& skyboxvertices, vector<string>& skyboxfaces) : _
 void HSkybox::Draw() {
 	glDepthFunc(GL_LEQUAL); // change depth function so depth test passes when values are equal to depth buffer's content
 	_shader->use();
+
+	unsigned int Matrix_index = glGetUniformBlockIndex(_shader->ID, "Matrices");
+	glUniformBlockBinding(_shader->ID, Matrix_index, _binding_point);
+
 	glBindBuffer(GL_UNIFORM_BUFFER, _skybox_buffer_id);
 	unsigned int buffer_offset = 0;
 
@@ -36,6 +40,11 @@ void HSkybox::BindCamera(HCamera* camera) {
 	_camera = camera;
 }
 
+void HSkybox::BindShaderUniformBuffer(unsigned int bind_point) {
+	glBindBufferBase(GL_UNIFORM_BUFFER, bind_point, _skybox_buffer_id);
+}
+
+
 void HSkybox::bindbuffer() {
 	// skybox VAO
 	glGenVertexArrays(1, &_skyboxVAO);
@@ -59,7 +68,6 @@ void HSkybox::bindbuffer() {
 	glBindBuffer(GL_UNIFORM_BUFFER, _skybox_buffer_id);
 	glBufferData(GL_UNIFORM_BUFFER, 2*MATRIX_BUFFER_SIZE, NULL, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-	glBindBufferBase(GL_UNIFORM_BUFFER, 0, _skybox_buffer_id);
 }
 
 void HSkybox::loadskybox() {

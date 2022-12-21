@@ -6,7 +6,7 @@ HModel::HModel(string const& path, bool gamma) : gammaCorrection(gamma)
 {
   genModelBuffer();
   loadModel(path);
-  //genModelCollider();
+  genModelCollider();
 }
 
 HModel::~HModel() {
@@ -20,6 +20,10 @@ HModel::~HModel() {
 void HModel::Draw()
 {
   shader->use();
+
+  unsigned int Matrix_index = glGetUniformBlockIndex(shader->ID, "Matrices");
+  glUniformBlockBinding(shader->ID, Matrix_index, binding_point);
+
   glBindBuffer(GL_UNIFORM_BUFFER, matrix_buffer_id);
   unsigned int buffer_offset = 0;
 
@@ -44,6 +48,13 @@ void HModel::Draw()
 
   for (unsigned int i = 0; i < meshes.size(); i++)
     meshes[i].Draw(shader);
+
+  
+
+}
+
+void HModel::DrawBox(HShader* shader) {
+  
 }
 
 
@@ -58,49 +69,62 @@ void HModel::UpdateColliderTransform() {
     }
     meshes[i].mesh_transform_mat *= model;
   }
-
-  /* 大盒子 */
 }
 
-
 void HModel::Action(HMap* map, float duration_time) {
-  setBoneTransform_ini(shader);
-
-  //cout << "Not implemented, always set animation as 0" << endl;
-
   if(scene->mNumAnimations >0){
     animation_index = 0;
-    float animation_duration = scene->mAnimations[animation_index]->mDuration;
-    float animation_ticks_per_second = scene->mAnimations[animation_index]->mTicksPerSecond;
-    animation_ticks = fmod((animation_ticks + duration_time * animation_ticks_per_second), animation_duration);
+    CalCurrentTicks(duration_time);
   }
-  
-  // 始终“踩在”地面上
-  int model_x = (int)(((position.x + Scale_X) / (2 * Scale_X))* x_range);
-  int model_y = (int)(((-position.z + Scale_Y) / (2 * Scale_Y)) * y_range);
 
-  int valid_point_num = 0; 
+  UpdateBoneTransform();
+  UpdateColliderTransform();
+  AdjustStepOnGround(map);
+}
+
+void HModel::Event(Events event) {
+  //cout << "Not implemented, always ignore" << endl;
+}
+
+void HModel::UpdateBoneTransform() {
+  /* Update the bone matrix */
+  setBoneTransform_ini(shader);
+}
+
+void HModel::AdjustStepOnGround(HMap* map) {
+  /* Always step on the ground */
+
+  int valid_point_num = 0;
   float height_sum = 0;
-  for(int i = -land_x_range; i<= land_x_range; i++)
-    for (int j = -land_y_range; j <= land_y_range; j++) 
-      if (map->get_height(model_x+i, model_y+j) != INVALID_HEIGHT) {
-        //cout << "<" << i << ">" << "<" << j << ">" << map->get_height(model_x+i, model_y+j) << endl;
-        height_sum += map->get_height(model_x+i, model_y+j);
-        valid_point_num++;
-      }
 
-  //cout << "Valid_Num: " << valid_point_num << endl;
-  //cout << "height_sum: " << height_sum << endl;
+  float delta_x[5] = { -1, 0, 0, 0, 1 };
+  float delta_y[5] = { 0, 1, 0, -1, 0 };
+  float height = 0;
+  float rate = 1.0f;
+
+  for (int i = 0; i < 5; i++) {
+    height = map->get_height(position.x + delta_x[i] * rate, position.z + delta_y[i] * rate);
+    if ( height != INVALID_HEIGHT) {
+      //cout << "<" << i << ">" << "<" << j << ">" << map->get_height(model_x+i, model_y+j) << endl;
+      height_sum += height;
+      valid_point_num++;
+    }
+  }
+      
   if (valid_point_num > 0)
     position.y = height_sum / valid_point_num + Y_OFFSET;
 }
 
-void HModel::Event(Event_Type event_type, HModel* another_model) {
-  cout << "Not implemented, always ignore" << endl;
+void HModel::CalCurrentTicks(float duration_time) {
+  float animation_duration = scene->mAnimations[animation_index]->mDuration;
+  float animation_ticks_per_second = scene->mAnimations[animation_index]->mTicksPerSecond;
+  animation_ticks = fmod((animation_ticks + duration_time * animation_ticks_per_second), animation_duration);
 }
 
 
+
 void HModel::BindShaderUniformBuffer(int binding_point) {
+  this->binding_point = binding_point;
   glBindBufferBase(GL_UNIFORM_BUFFER, binding_point, matrix_buffer_id);
 }
 
@@ -114,6 +138,29 @@ void HModel::SetRotation(const glm::quat& rotation_quat) {
 
 void HModel::SetScaling(const glm::vec3& scaling_vec) {
   scaling = scaling_vec;
+}
+
+
+glm::mat4 HModel::GetPositionMat() {
+  glm::mat4 identity(1.0f);
+  return glm::translate(identity, position);
+}
+
+glm::mat4 HModel::GetRotationMat() {
+  return glm::mat4_cast(rotation);
+}
+
+glm::mat4 HModel::GetScalingMat() {
+  glm::mat4 identity(1.0f);
+  return glm::scale(identity, scaling);
+}
+
+bool HModel::is_need_detect_collision() {
+  return engine_detect_collision;
+}
+
+void HModel::set_need_detect_collision(bool flag) {
+  engine_detect_collision = flag;
 }
 
   // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
@@ -157,11 +204,21 @@ void HModel::BindCamera(HCamera* model_camera) {
   camera = model_camera;
 }
 
-HCollider* HModel::genModelCollider() {
-  // Not implemted
+void HModel::genModelCollider() {
   vector<vector<float>> v;
-  HCollider* collider = new HCollider(v);
-  return collider;
+
+  for (int i = 0; i < meshes.size(); i++) {
+    for (int j = 0; j < meshes[i].vertices.size(); j++) {
+      vector<float> temp;
+      temp.push_back(meshes[i].vertices[j].Position.x);
+      temp.push_back(meshes[i].vertices[j].Position.y);
+      temp.push_back(meshes[i].vertices[j].Position.z);
+
+      v.push_back(temp);
+    }
+  }
+
+  collider = new HCollider(v);
 }
 
 // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
@@ -281,8 +338,7 @@ HMesh HModel::processMesh(aiMesh* mesh)
         for (unsigned int k = 0; k < scene->mAnimations[j]->mNumChannels; k++) {
           if (bname == scene->mAnimations[j]->mChannels[k]->mNodeName.data)
             channels_map[j].emplace(bname, k);
-        }
-      }
+        }      }
     }
     else
       bone_index = bone_map[bname];
@@ -352,8 +408,8 @@ HCollider* HModel::get_collider() {
   return collider;
 }
 
-vector<HMesh>* HModel::get_meshes() {
-  return &meshes;
+vector<HMesh>& HModel::get_meshes() {
+  return meshes;
 }
 
 
@@ -391,17 +447,12 @@ vector<Texture> HModel::loadMaterialTextures(aiMaterial* mat, aiTextureType type
 }
 
 void HModel::setBoneTransform_ini(HShader* shader) {
-  if (animation_index == INVALID_ANIMATION_INDEX)
+  if (animation_index == INVALID_ANIMATION_INDEX || animation_index >= scene->mNumAnimations)
     return;
 
   // used for debug 
   //cout << "In draw() Animations num: " << scene->mNumAnimations << endl;
-  //cout << "In draw() Scene Pointer: " << scene << endl;
-
-  if (animation_index >= scene->mNumAnimations) {
-    //cout << "ERROR::SETBONETRANSFORM:: The index: " << animation_index << " is splited.(Number of animations: " << scene->mNumAnimations << ")" << endl;
-    return;
-  }
+  //cout << "In draw() Scene Pointer: " << scene << endl
 
   glm::mat4 identity(1.0f);
   // used for debug

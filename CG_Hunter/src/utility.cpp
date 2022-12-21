@@ -21,3 +21,7 @@ void show_mat4(glm::mat4 mat, string mat_name) {
   }
 
 }
+
+glm::vec3 glm_vec4_to_glm_vec3(glm::vec4 vec) {
+  return glm::vec3(vec.x / vec.w, vec.y / vec.w, vec.z / vec.w);
+}

@@ -32,16 +32,18 @@ int main() {
 	engine->insert_shader("./resources/shader/vs/skybox.vert", "./resources/shader/fs/skybox.frag");
 	engine->insert_shader("./resources/shader/vs/map.vert", "./resources/shader/fs/map.frag");
 
+	/* Create new map */
+	engine->create_map("./resources/map/map_smooth.fbx");
 
 	/* Create new hunter */
 	engine->create_hunter("./resources/model/cube.fbx", glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.0f);
 	engine->get_hunter()->SetScaling(glm::vec3(0.6f, 0.6f, 0.6f)); // Set model scaling
-	
-	/* Create new map */
-	engine->create_map("./resources/map/map.fbx");
-	engine->get_map()->get_map_model()->SetScaling(glm::vec3(Scale_X, Scale_Y, Scale_Z));
-	engine->get_map()->get_map_model()->SetRotation(glm::quat(glm::highp_vec3(glm::radians(-90.0f), 0.0f, 0.0f)));
-	engine->get_map()->get_map_model()->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+
+	///* Create a model */
+	engine->insert_model("./resources/model/cube.fbx", false);
+	engine->get_model(0)->SetScaling(glm::vec3(1.0f, 1.0f, 1.0f)); // Set model scaling
+	engine->get_model(0)->SetPosition(glm::vec3(25.0f, 5.0f, -5.0f));
+	engine->get_map()->update_model(engine->get_model(0));
 
 
 	/* Create new skybox */
@@ -52,13 +54,23 @@ int main() {
 	/* Set binding */
 	engine->get_hunter()->BindShader(engine->get_shader(0));
 	engine->get_hunter()->BindCamera(engine->get_camera(0));
-	engine->set_model_matrix_bindpoint(-2, 1);
+	engine->get_hunter()->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE);
+
+	engine->get_model(0)->BindShader(engine->get_shader(0));
+	engine->get_model(0)->BindCamera(engine->get_camera(0));
+	engine->get_model(0)->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE+1);
+
 	engine->get_skybox(0)->BindShader(engine->get_shader(1));
 	engine->get_skybox(0)->BindCamera(engine->get_camera(0));
+	engine->get_skybox(0)->BindShaderUniformBuffer(BINDING_POINT_SKYBOX);
+
 	engine->get_map()->get_map_model()->BindShader(engine->get_shader(2));
 	engine->get_map()->get_map_model()->BindCamera(engine->get_camera(0));
-	engine->set_model_matrix_bindpoint(-1, 2);
+	engine->get_map()->get_map_model()->BindShaderUniformBuffer(BINDING_POINT_MAP);
 	
+	/* Set collision */
+	engine->get_hunter()->set_need_detect_collision(true);
+
 	engine->run();
 
 	engine->terminate();

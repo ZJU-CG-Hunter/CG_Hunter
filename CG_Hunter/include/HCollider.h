@@ -18,8 +18,9 @@ public:
 	glm::vec3* get_feature();
 
 	glm::vec2* get_board();
+
+	glm::vec3 get_Points(int index);
 private:
-	//void generate_board(vector<vector<float>> v);
 
 	void CalPoints();
 

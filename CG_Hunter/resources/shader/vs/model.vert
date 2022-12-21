@@ -13,9 +13,9 @@ out vec3 Normal;
 out vec3 Position;
 out vec2 TexCoords;
 
-const int MAX_BONES = 500;
+const int MAX_BONES = 1000;
 
-layout (std140, binding = 1) uniform Matrices
+layout (std140) uniform Matrices
 {
   mat4 model;
   mat4 projection;

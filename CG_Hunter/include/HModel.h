@@ -23,12 +23,8 @@
 #include <map>
 #include <vector>
 
-using namespace std;
 
-enum class Event_Type {
-  Collision,
-  Unknown
-};
+using namespace std;
 
 enum class Model_Type {
   Pig,
@@ -36,6 +32,24 @@ enum class Model_Type {
   Hunter,
   Arrow,
   Unknown
+};
+
+class HModel;
+
+class Collision : public Events {
+public:
+  Collision(bool is_collide, HModel* model_1, HModel* model_2, vector<int> model_1_meshes_index, vector<int> model_2_meshes_index): Events(Event_Type::Collision), _is_collide(is_collide), _model_1(model_1), _model_2(model_2), _model_1_meshes_index(model_1_meshes_index), _model_2_meshes_index(model_2_meshes_index) {}
+
+  bool _is_collide;
+
+  /* model_1 and model_2 are the 2 models detected collision */
+  HModel* _model_1; 
+  HModel* _model_2;
+
+  /* mesh in model_1[i] collides with mesh in model_2[i] */
+  vector<int> _model_1_meshes_index; // The collision meshes in model_1 
+  vector<int> _model_2_meshes_index; // The collision meshes in model_2
+
 };
 
 struct BoneData {
@@ -69,6 +83,7 @@ protected:
   vector<BoneData> bones;
   glm::mat4 inverse_root_matrix;
   unsigned int matrix_buffer_id;
+  unsigned int binding_point;
  
   const aiScene* scene;
   Assimp::Importer* importer;
@@ -91,9 +106,14 @@ protected:
   float min_y, max_y;
   float min_z, max_z;
 
+  bool engine_detect_collision;
+
   bool first_record = true;
 
   float speed;
+
+  int map_x = -1;
+  int map_y = -1;
 
 public:
   // constructor, expects a filepath to a 3D model.
@@ -104,8 +124,14 @@ public:
   // update collider transformation matrix
   void UpdateColliderTransform();
 
+  void UpdateBoneTransform();
+
+  void AdjustStepOnGround(HMap* map);
+
   // draws the model, and thus all its meshes
   void Draw();
+
+  void DrawBox(HShader* shader);
 
   void BindShader(HShader* model_shader);
 
@@ -115,11 +141,11 @@ public:
 
   virtual void Action(HMap* map, float duration_time);
 
-  virtual void Event(Event_Type event_type, HModel* another_model);
+  virtual void Event(Events event);
 
   HCollider* get_collider();
 
-  vector<HMesh>* get_meshes();
+  vector<HMesh>& get_meshes();
 
   void SetPosition(const glm::vec3& position_vec);
 
@@ -127,16 +153,22 @@ public:
 
   void SetScaling(const glm::vec3& scaling_vec);
 
-  void GetPositionMat();
+  glm::mat4 GetPositionMat();
 
-  void GetRotationMat();
+  glm::mat4 GetRotationMat();
 
-  void GetScalingMat();
+  glm::mat4 GetScalingMat();
 
-private:
+  bool is_need_detect_collision();
+
+  void set_need_detect_collision(bool flag);
+
+protected:
   void genModelBuffer();
 
-  HCollider* genModelCollider();
+  void genModelCollider();
+
+  void CalCurrentTicks(float duration_time);
 
   // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
   void loadModel(string const& path);

@@ -85,6 +85,8 @@ HMap* HEngine::get_map() {
 /* Create hunter */
 void HEngine::create_hunter(string const& path, const glm::vec3 front, const glm::vec3 up, const glm::vec3 right, const glm::vec3 worldup, float yaw, float pitch) {
 	_hunter = new HHunter(path, front, up, right, worldup, yaw, pitch);
+
+	_map->insert_model(_hunter);
 }
 
 /* Return the map */
@@ -150,7 +152,7 @@ void HEngine::insert_model(string const& path, bool gamma) {
 
 	_models.emplace_back(created_model);
 
-	//_map->insert_model(created_model);
+	_map->insert_model(created_model);
 }
 
 HModel* HEngine::get_model(int model_index) {
@@ -159,19 +161,6 @@ HModel* HEngine::get_model(int model_index) {
 	return _models[model_index];
 }
 
-
-void HEngine::set_model_matrix_bindpoint(int model_index, int binding_point) {
-	if (model_index == -2)
-		_hunter->BindShaderUniformBuffer(binding_point);
-	else if (model_index == -1)
-		_map->get_map_model()->BindShaderUniformBuffer(binding_point);
-	else {
-		check_splited(model_index, _models);
-		_models[model_index]->BindShaderUniformBuffer(binding_point);
-	}
-
-	return;
-}
 
 /* Get the current mouse info */
 void HEngine::get_mouse_xy(float& lastX, float& lastY) {
@@ -211,7 +200,25 @@ void HEngine::processInput() {
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		_hunter->move(Camera_Movement::RIGHT, _deltatime);
 
+	_map->update_model(_hunter);
+
 }
+
+void HEngine::collision_detection() {
+	vector<HModel*> nearby;
+
+	if (_hunter->is_need_detect_collision()) {
+		nearby.clear();
+		nearby = _map->get_model_nearby(_hunter, 20.0f);
+
+		for (int i = 0; i < nearby.size(); i++) {
+			Collision collision_type = get_collide_type(_hunter, nearby[i]);
+			_hunter->Event(collision_type);
+			nearby[i]->Event(collision_type);
+		}
+	}
+}
+
 
 
 void HEngine::clear_buffer() {
@@ -229,28 +236,17 @@ void HEngine::run() {
 		/* input */
 		processInput();
 
-		/* auto action */
+		/* action */
 		_hunter->Action(_map, _deltatime);
 
 		for (unsigned int i = 0; i < _models.size(); i++)
 			_models[i]->Action(_map, _deltatime);
 
-		/* event: collision */
-		for (unsigned int i = 0; i < _models.size(); i++)
-		{
-			HModel* model1 = _models[i];
-			set<HModel*> set_near = _map->get_model_nearby(model1);
-			for (set<HModel*>::iterator j = set_near.begin(); j != set_near.end(); j++)
-			{
-				HModel* model2 = *j;
-				collides type = get_collide_type(model1, model2);
-				if (type.if_collide)
-				{
-					/*model_action(model1, type.model1_event);
-					model_action(model2, type.model2_event);*/
-				}
-			}
-		}
+		/* Event */
+		collision_detection();
+
+		/* Update Map */
+
 
 		/* clear */
 		clear_buffer();
@@ -331,86 +327,68 @@ void HEngine::check_splited(int index, vector<T> vec) {
 	}
 }
 
-collides HEngine::get_collide_type(HModel* model1, HModel* model2)
+Collision HEngine::get_collide_type(HModel* model1, HModel* model2)
 {
-
-	collides res;
+	bool collide_bool = false;
+	vector<int> model_1_meshes_index, model_2_meshes_index;
 
 	HCollider* a = model1->get_collider();
-	HCollider* b = model2->get_collidber();
+	HCollider* b = model2->get_collider();
 
-	glm::vec3* Points1 = Tran_Points(a);
-	glm::vec3* Points2 = Tran_Points();
+	vector<glm::vec3> Points1(8);
+	vector<glm::vec3> Points2(8);
 
-	bool collide_bool = if_collide(Points1, Points2);
-	bool Flag = collide_bool;
+	glm::mat4 wvp1 = model1->GetPositionMat() * model1->GetRotationMat() * model1->GetScalingMat();
+	glm::mat4 wvp2 = model2->GetPositionMat() * model2->GetRotationMat() * model2->GetScalingMat();
+
+
+	for (int i = 0; i < 8; i++) {
+		Points1[i] = glm_vec4_to_glm_vec3(wvp1 * glm::vec4(a->get_Points(i), 1.0f));
+		Points2[i] = glm_vec4_to_glm_vec3(wvp2 * glm::vec4(b->get_Points(i), 1.0f));
+	}
+
+	//show_mat4(wvp1, "wvp1");
+	//show_mat4(wvp2, "wvp2");
+	/*for(int i = 0; i<2; i++)
+		cout << "Points1: " << Points1[i].x << ", " << Points1[i].y << ", " << Points1[i].z << endl;
+	for(int i = 0; i<2; i++)
+		cout << "Points2: " << Points2[i].x << ", " << Points2[i].y << ", " << Points2[i].z << endl;*/
+	
+	collide_bool = if_collide(Points1, Points2);
+	
+	if(collide_bool)
+	 cout << "Big Box detection" << endl;
 
 	if (collide_bool)
 	{
 		collide_bool = false;
-		for (int i = 0; i < model1->get_collider_size() - 1; i++)
+		for (int i = 0; i < model1->get_meshes().size(); i++)
 		{
-			a = model1->get_colliders(i);
-			for (int j = 0; j < model2->get_collider_size() - 1; j++)
+			a = model1->get_meshes()[i].ini_collider;
+			wvp1 = model1->get_meshes()[i].mesh_transform_mat;
+			for (int j = 0; j < model2->get_meshes().size(); j++)
 			{
-				b = model2->get_colliders(j);
-				Points1 = Tran_Points(a);
-				Points2 = Tran_Points(b);
-				collide_bool = if_collide(Points1, Points2);
-				if (collide_bool)
-				{
-					res.if_collide = collide_bool;
-					if (collide_bool)
-					{
-						res.model1_event = Events::type1;
-						res.model2_event = Events::type2;
-					}
-					return res;
+				b = model2->get_meshes()[j].ini_collider;
+				wvp2 = model2->get_meshes()[j].mesh_transform_mat;
+
+				for (int k = 0; k < 8; k++) {
+					Points1[k] = glm_vec4_to_glm_vec3(wvp1 * glm::vec4(a->get_Points(i), 1.0f));
+					Points2[k] = glm_vec4_to_glm_vec3(wvp2 * glm::vec4(b->get_Points(i), 1.0f));
+				}
+
+				if (if_collide(Points1, Points2)) {
+					collide_bool = true;
+					model_1_meshes_index.emplace_back(i);
+					model_2_meshes_index.emplace_back(j);
 				}
 			}
 		}
 	}
 
-	res.if_collide = collide_bool;
-	return res;
-
-
-	/*while (Flag)
-	{
-		collide_bool = false;
-		for (int i = 0; i < model1->get_collider_size() - 1; i++)
-		{
-			a = model1->get_colliders(i);
-			for (int j = 0; j < model2->get_collider_size() - 1; j++)
-			{
-				b = model2->get_colliders(j);
-				Points1 = Tran_Points(a);
-				Points2 = Tran_Points(b);
-				collide_bool = if_collide(Points1, Points2);
-				if (i == model1->get_collider_size() - 2 && j == model2->get_collider_size() - 2)
-				{
-					Flag = false;
-				}
-				if (collide_bool)
-				{
-					Flag = false;
-					break;
-				}
-			}
-			if (collide_bool) break;
-		}
-	}
-
-
-
-	if (collide_bool)
-	{
-		res.model1_event = Events::type1;
-		res.model2_event = Events::type2;
-	}
-	return res;*/
+	return Collision(collide_bool, model1, model2, model_1_meshes_index, model_2_meshes_index);
 }
-bool HEngine::if_collide(glm::vec3* Points1, glm::vec3* Points2)
+
+bool HEngine::if_collide(vector<glm::vec3> Points1, vector<glm::vec3> Points2)
 {
 	glm::vec3 fs[6];
 

@@ -15,6 +15,7 @@ HCollider::HCollider(vector<vector<float>> v)
 			_board[i][j] = m(i, j);
 
 	CalPoints();
+
 }
 void HCollider::CalPoints()
 {
@@ -38,6 +39,11 @@ glm::vec2* HCollider::get_board()
 {
 	return _board;
 }
+
+glm::vec3 HCollider::get_Points(int index) {
+	return _Points[index];
+}
+
 
 vector<float> HCollider::getcenter(vector<vector<float>> v)
 {

@@ -24,6 +24,8 @@ private:
   unsigned int _skyboxVBO;
   unsigned int _skyboxtexture;
 
+  unsigned int _binding_point;
+
   HShader* _shader;
   HCamera* _camera;
 
@@ -35,6 +37,8 @@ public:
   void BindShader(HShader* shader);
 
   void BindCamera(HCamera* camera);
+
+  void BindShaderUniformBuffer(unsigned int bind_point);
 
 private:
   void bindbuffer();

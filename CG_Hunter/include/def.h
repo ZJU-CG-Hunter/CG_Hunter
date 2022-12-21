@@ -38,22 +38,38 @@ const float Scale_X = 100.0f;
 const float Scale_Y = 100.0f;
 const float Scale_Z = 100.0f;
 
-const int x_range = 250;
-const int y_range = 250;
-
 const int land_x_range = 3;
 const int land_y_range = 3;
 
 const float Y_OFFSET = 3.5f;
 
-enum class Events {
-	//like run, stop...
-	type1, type2, type3
+const float DEFALUT_NEARBY_RANGE = 5.0f;
+
+const unsigned int BINDING_POINT_SKYBOX = 0;
+
+const unsigned int BINDING_POINT_MAP = 1;
+
+const unsigned int BINDING_POINT_MODEL_BASE = 2;
+
+enum class Event_Type {
+  Collision,
+  Watching,
+  Picking,
+  Unknown
 };
 
-struct collides
-{
-	bool if_collide;
-	Events model1_event;
-	Events model2_event;
+enum class Map_Type {
+  Grass,
+  Mountain,
+  Water,
+  Unkown
 };
+
+class Events {
+public:
+  Events(Event_Type event_type): _event_type(event_type){}
+
+protected:
+  Event_Type _event_type;
+};
+
