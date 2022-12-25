@@ -12,7 +12,7 @@ HHunter::HHunter(string const& path, const glm::vec3 front, const glm::vec3 up, 
 
 void HHunter::Event(Collision event) {
 	if (event._is_collide) {
-		cout << "Collision happens!" << endl;
+		//cout << "Collision happens!" << endl;
 		position = last_position;
 	}
 
@@ -77,7 +77,7 @@ void HHunter::turn(float xoffset, float yoffset) {
 void HHunter::update_camera(){
 	glm::vec3 back = glm::cross(Right, WorldUp);
 	back = glm::normalize(back);
-	camera->Position = position + back * glm::vec3(10.0f, 10.0f, 10.0f) + WorldUp * glm::vec3(5.0f, 5.0f, 5.0f);
+	camera->Position = position + back * glm::vec3(8.0f, 8.0f, 8.0f) + WorldUp * glm::vec3(5.0f, 5.0f, 5.0f);
 }
 
 

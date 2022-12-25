@@ -14,7 +14,7 @@
 
 using namespace std;
 
-#define MAX_BONE_INFLUENCE 10
+#define MAX_BONE_INFLUENCE 20
 
 struct Vertex {
   // position
@@ -69,6 +69,8 @@ public:
   vector<Texture>      textures;
   unsigned int VAO;
 
+  glm::mat4 ini_trans;
+
   // collider used for detecting collision
   HCollider* ini_collider;
   glm::mat4 mesh_transform_mat;
@@ -99,6 +101,10 @@ public:
     unsigned int specularNr = 1;
     unsigned int normalNr = 1;
     unsigned int heightNr = 1;
+
+    //cout << "Texture size: " << textures.size() << endl;
+
+    //cout << "size: " << textures.size() << endl;
     for (unsigned int i = 0; i < textures.size(); i++)
     {
       // The defalut skybox id GL_TEXTRUE15 is left for skybox texture
@@ -119,6 +125,8 @@ public:
 
       // now set the sampler to the correct texture unit
       glUniform1i(glGetUniformLocation(shader->ID, (name + number).c_str()), i);
+
+      //cout << "texture_name: " << name + number << endl;
       // and finally bind the texture
       glBindTexture(GL_TEXTURE_2D, textures[i].id);
     }

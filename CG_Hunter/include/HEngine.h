@@ -21,6 +21,7 @@
 
 using namespace std;
 
+
 class HEngine {
 protected:
 	// The glfw windows of the engine
@@ -57,6 +58,12 @@ protected:
 	float _lastY;
 	bool _firstMouse;
 
+	bool _is_magnifier_draw = false;
+
+	unsigned int magnifier_VAO = 0;
+	unsigned int magnifier_VBO = 0;
+	HShader* magnifier_shader;
+
 public:
 	/* Constructor of the Engine */
 	HEngine();
@@ -79,6 +86,8 @@ public:
 	void set_scroll_callback(int window_index, GLFWscrollfun funptr);
 
 	void set_window_inputmode(int window_index, int mode, int value);
+
+	void set_mouse_button_callback(int window_index, GLFWmousebuttonfun funptr);
 
 	void set_cursor_hide(int window_index);
 
@@ -136,6 +145,8 @@ public:
 	/* Set firstmosue */
 	void set_firstmouse(bool firstMouse);
 
+	void setup_magnifier();
+
 	/* process all input */
 	virtual void processInput();
 
@@ -147,6 +158,10 @@ public:
 	bool inspection_2D(glm::vec2* p1, glm::vec2* p2);
 
 	void collision_detection();
+
+	void draw_magnifier();
+
+	void is_draw_magnifier(bool flag);
 
 	/* Clear buffer before rendering */
 	virtual void clear_buffer();

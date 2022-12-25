@@ -74,6 +74,12 @@
     <None Include="resources\shader\fs\test.frag">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="resources\shader\vs\magnifier.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resources\shader\fs\magnifier.frag">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\HEngine.cpp">
@@ -101,6 +107,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\HHunter.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\glad.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -23,6 +23,8 @@ layout (std140) uniform Matrices
   mat4 bones[MAX_BONES];
 };
 
+uniform mat4 ini_trans;
+
 void main()
 {
     mat4 BoneTransform = mat4(1.0f);
@@ -34,7 +36,7 @@ void main()
     }
 
     Normal = mat3(transpose(inverse(model * BoneTransform))) * aNormal;
-    Position = vec3(model * BoneTransform * vec4(aPos, 1.0));
+    Position = vec3(model* BoneTransform * vec4(aPos, 1.0));
     TexCoords = aTexCoords;
     gl_Position = projection * view * model * BoneTransform * vec4(aPos, 1.0);
 }

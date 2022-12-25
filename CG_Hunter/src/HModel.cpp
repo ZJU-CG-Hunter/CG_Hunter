@@ -44,12 +44,18 @@ void HModel::Draw()
 
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+  glm::vec3 lightDir(0.0f, 1.0f, 0.0f);
+
+
   shader->setVec3("cameraPos", camera->Position);
+  shader->setVec3("lightDir", lightDir);
+  shader->setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 
-  for (unsigned int i = 0; i < meshes.size(); i++)
+  for (unsigned int i = 0; i < meshes.size(); i++) {
+    shader->setMat4("ini_trans", meshes[i].ini_trans);
     meshes[i].Draw(shader);
+  }
 
-  
 
 }
 
@@ -73,7 +79,7 @@ void HModel::UpdateColliderTransform() {
 
 void HModel::Action(HMap* map, float duration_time) {
   if(scene->mNumAnimations >0){
-    animation_index = 0;
+    animation_index = 4;
     CalCurrentTicks(duration_time);
   }
 
@@ -93,26 +99,10 @@ void HModel::UpdateBoneTransform() {
 
 void HModel::AdjustStepOnGround(HMap* map) {
   /* Always step on the ground */
-
-  int valid_point_num = 0;
-  float height_sum = 0;
-
-  float delta_x[5] = { -1, 0, 0, 0, 1 };
-  float delta_y[5] = { 0, 1, 0, -1, 0 };
-  float height = 0;
-  float rate = 1.0f;
-
-  for (int i = 0; i < 5; i++) {
-    height = map->get_height(position.x + delta_x[i] * rate, position.z + delta_y[i] * rate);
-    if ( height != INVALID_HEIGHT) {
-      //cout << "<" << i << ">" << "<" << j << ">" << map->get_height(model_x+i, model_y+j) << endl;
-      height_sum += height;
-      valid_point_num++;
-    }
-  }
       
-  if (valid_point_num > 0)
-    position.y = height_sum / valid_point_num + Y_OFFSET;
+  position.y = map->get_height(position.x, position.z) + Y_OFFSET;
+
+  //cout << "Height: " << position.y << endl;
 }
 
 void HModel::CalCurrentTicks(float duration_time) {
@@ -224,19 +214,26 @@ void HModel::genModelCollider() {
 // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
 void HModel::processNode(aiNode* node)
 {
+  cout << "Number of Mesh: " << node->mNumMeshes << endl;
   // process each mesh located at the current node
   for (unsigned int i = 0; i < node->mNumMeshes; i++)
   {
     // the node object only contains indices to index the actual objects in the scene. 
     // the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
+    cout << "current_mesh: " << i << endl;
+
+
     aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
     meshes.push_back(processMesh(mesh));
+    meshes[meshes.size() - 1].ini_trans = aimat_to_glmmat(node->mTransformation);
     //meshes.push_back(processMesh(mesh, scene));
   }
   // after we've processed all of the meshes (if any) we then recursively process each of the children nodes
-  //cout << "Number of children: " << node->mNumChildren << endl;
+  
+  cout << "Number of children: " << node->mNumChildren << endl;
   for (unsigned int i = 0; i < node->mNumChildren; i++)
   {
+    cout << "Current child: " << i << endl;
     processNode(node->mChildren[i]);
   }
 }
@@ -295,6 +292,9 @@ HMesh HModel::processMesh(aiMesh* mesh)
       // use models where a vertex can have multiple texture coordinates so we always take the first set (0).
       vec.x = mesh->mTextureCoords[0][i].x;
       vec.y = mesh->mTextureCoords[0][i].y;
+
+      //cout << "texcoord: " << vec.x << ", " << vec.y << endl;
+
       vertex.TexCoords = vec;
       // tangent
       vector.x = mesh->mTangents[i].x;
@@ -378,6 +378,7 @@ HMesh HModel::processMesh(aiMesh* mesh)
     for (unsigned int j = 0; j < face.mNumIndices; j++)
       indices.push_back(face.mIndices[j]);
   }
+
   // process materials
   aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
   // we assume a convention for sampler names in the shaders. Each diffuse texture should be named
@@ -423,6 +424,9 @@ vector<Texture> HModel::loadMaterialTextures(aiMaterial* mat, aiTextureType type
     aiString str;
     mat->GetTexture(type, i, &str);
     // check if texture was loaded before and if so, continue to next iteration: skip loading a new texture
+
+    cout << "texturestr:" << str.C_Str() << endl;
+
     bool skip = false;
     for (unsigned int j = 0; j < textures_loaded.size(); j++)
     {
@@ -654,8 +658,12 @@ glm::mat4 HModel::aimat_to_glmmat(aiMatrix3x3 ai_matrix) {
 
 unsigned int HModel::TextureFromFile(const char* path, const string& directory, bool gamma)
 {
+  cout << "path:" << path << endl;
+
   string filename = string(path);
   filename = directory + '/' + filename;
+
+  cout << "filename: " << filename << endl;
 
   unsigned int textureID;
   glGenTextures(1, &textureID);

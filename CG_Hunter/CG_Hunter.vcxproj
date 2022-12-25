@@ -36,16 +36,19 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="resources\shader\fs\magnifier.frag" />
     <None Include="resources\shader\fs\map.frag" />
     <None Include="resources\shader\fs\model.frag" />
     <None Include="resources\shader\fs\skybox.frag" />
     <None Include="resources\shader\fs\test.frag" />
+    <None Include="resources\shader\vs\magnifier.vert" />
     <None Include="resources\shader\vs\map.vert" />
     <None Include="resources\shader\vs\model.vert" />
     <None Include="resources\shader\vs\skybox.vert" />
     <None Include="resources\shader\vs\test.vert" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\HAnimation.cpp" />
     <ClCompile Include="src\HCollider.cpp" />
     <ClCompile Include="src\HEngine.cpp" />
@@ -167,7 +170,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>./lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mtd.lib;glfw3.lib;stb.lib;freetyped.lib;glad.lib;opencv_world454d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;glfw3.lib;stb.lib;freetyped.lib;opencv_world454d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
