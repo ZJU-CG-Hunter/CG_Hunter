@@ -60,6 +60,9 @@ void HMap::insert_model(HModel* model) {
 		model->map_x = map_x;
 		model->map_y = map_y;
 	}
+
+
+
 	return;
 }
 

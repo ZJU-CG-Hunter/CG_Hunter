@@ -79,7 +79,7 @@ void HModel::UpdateColliderTransform() {
 
 void HModel::Action(HMap* map, float duration_time) {
   if(scene->mNumAnimations >0){
-    animation_index = 4;
+    animation_index = 0;
     CalCurrentTicks(duration_time);
   }
 

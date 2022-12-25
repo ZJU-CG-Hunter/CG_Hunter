@@ -63,6 +63,11 @@ protected:
 	unsigned int magnifier_VAO = 0;
 	unsigned int magnifier_VBO = 0;
 	HShader* magnifier_shader;
+	vector<float> magnifier_vertices;
+
+
+	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+	unsigned int depthMapFBO;
 
 public:
 	/* Constructor of the Engine */
@@ -163,6 +168,8 @@ public:
 
 	void is_draw_magnifier(bool flag);
 
+	void setup_depthMap();
+
 	/* Clear buffer before rendering */
 	virtual void clear_buffer();
 
@@ -196,3 +203,4 @@ protected:
 	void check_splited(int index, vector<T>);
 
 };
+
