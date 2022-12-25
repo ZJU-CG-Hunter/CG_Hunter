@@ -36,8 +36,8 @@ int main() {
 	engine->create_map("./resources/map/map_smooth.fbx");
 
 	/* Create new hunter */
-	engine->create_hunter("./resources/model/cube.fbx", glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.0f);
-	engine->get_hunter()->SetScaling(glm::vec3(0.6f, 0.6f, 0.6f)); // Set model scaling
+	engine->create_hunter("./resources/model/Pig4.fbx", glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.0f);
+	engine->get_hunter()->SetScaling(glm::vec3(0.005f, 0.005f, 0.005f)); // Set model scaling
 
 	///* Create a model */
 	engine->insert_model("./resources/model/cube.fbx", false);
