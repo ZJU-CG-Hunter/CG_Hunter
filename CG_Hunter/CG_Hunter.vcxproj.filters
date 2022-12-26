@@ -62,12 +62,6 @@
     <None Include="resources\shader\vs\model.vert">
       <Filter>资源文件</Filter>
     </None>
-    <None Include="resources\shader\vs\map.vert">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="resources\shader\fs\map.frag">
-      <Filter>资源文件</Filter>
-    </None>
     <None Include="resources\shader\vs\test.vert">
       <Filter>资源文件</Filter>
     </None>
@@ -78,6 +72,12 @@
       <Filter>资源文件</Filter>
     </None>
     <None Include="resources\shader\fs\magnifier.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resources\shader\vs\shadow_empty.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resources\shader\fs\shadow_empty.frag">
       <Filter>资源文件</Filter>
     </None>
   </ItemGroup>

@@ -9,11 +9,15 @@ layout (location = 6) in vec4  aWeights;
 layout (location = 7) in int   aNumOfBones;
 
 
-out vec3 Normal;
-out vec3 Position;
-out vec2 TexCoords;
+const int MAX_BONES = 1000;
 
-const int MAX_BONES = 500;
+out VS_OUT {
+  out vec3 Normal;
+  out vec3 Position;
+  out vec2 TexCoords;
+  out vec3 FragPos;
+  out vec4 FragPosLightSpace;
+}vs_out;
 
 layout (std140) uniform Matrices
 {
@@ -23,10 +27,22 @@ layout (std140) uniform Matrices
   mat4 bones[MAX_BONES];
 };
 
+uniform mat4 lightSpaceMatrix;
+
 void main()
 {
-    Normal = mat3(transpose(inverse(model))) * aNormal;
-    Position = vec3(model * vec4(aPos, 1.0));
-    TexCoords = aTexCoords;
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
+    mat4 BoneTransform = mat4(1.0f);
+    if(aNumOfBones > 0){
+      BoneTransform = mat4(0.0f);
+      for(int i = 0; i < aNumOfBones; i++){
+        BoneTransform += bones[aBoneIDs[i]] * aWeights[i];
+      }
+    }
+    vs_out.Normal = mat3(transpose(inverse(model * BoneTransform))) * aNormal;
+    vs_out.Position = vec3(model* BoneTransform * vec4(aPos, 1.0));
+    vs_out.TexCoords = aTexCoords;
+    vs_out.FragPos = vec3(model* BoneTransform * vec4(aPos, 1.0));
+    vs_out.FragPosLightSpace = lightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
+
+    gl_Position = projection * view * model * BoneTransform * vec4(aPos, 1.0);
 }

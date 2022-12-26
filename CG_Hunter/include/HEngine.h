@@ -66,8 +66,10 @@ protected:
 	vector<float> magnifier_vertices;
 
 
-	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+	unsigned int depthMap;
 	unsigned int depthMapFBO;
+
+	HShader* shadow_depth_shader;
 
 public:
 	/* Constructor of the Engine */
@@ -169,6 +171,8 @@ public:
 	void is_draw_magnifier(bool flag);
 
 	void setup_depthMap();
+
+	void draw_shadow();
 
 	/* Clear buffer before rendering */
 	virtual void clear_buffer();

@@ -37,13 +37,13 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="resources\shader\fs\magnifier.frag" />
-    <None Include="resources\shader\fs\map.frag" />
     <None Include="resources\shader\fs\model.frag" />
+    <None Include="resources\shader\fs\shadow_empty.frag" />
     <None Include="resources\shader\fs\skybox.frag" />
     <None Include="resources\shader\fs\test.frag" />
     <None Include="resources\shader\vs\magnifier.vert" />
-    <None Include="resources\shader\vs\map.vert" />
     <None Include="resources\shader\vs\model.vert" />
+    <None Include="resources\shader\vs\shadow_empty.vert" />
     <None Include="resources\shader\vs\skybox.vert" />
     <None Include="resources\shader\vs\test.vert" />
   </ItemGroup>

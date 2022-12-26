@@ -82,4 +82,8 @@ void HHunter::update_camera(){
 	camera->Position = position + back * glm::vec3(8.0f, 8.0f, 8.0f) + WorldUp * glm::vec3(5.0f, 5.0f, 5.0f);
 }
 
+glm::vec3 HHunter::get_position() {
+	return position;
+}
+
 

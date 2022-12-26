@@ -22,6 +22,10 @@ const unsigned int MATRIX_UNIFROM_BUFFER_SIZE = (MATRIX_BUFFER_SIZE) * (3 + (MAX
 const unsigned int SCR_WIDTH = 1200;
 const unsigned int SCR_HEIGHT = 800;
 
+const unsigned int SHADOW_WIDTH = 4096;
+const unsigned int SHADOW_HEIGHT = 4096;
+
+
 const unsigned int MAX_SHADER_BINDING = 4;
 
 const int INVALID_ANIMATION_INDEX = -1;
@@ -51,6 +55,8 @@ const unsigned int BINDING_POINT_SKYBOX = 0;
 const unsigned int BINDING_POINT_MAP = 1;
 
 const unsigned int BINDING_POINT_MODEL_BASE = 2;
+
+const unsigned int DEPTH_MAP_TEXTURE = 14;
 
 enum class Event_Type {
   Collision,

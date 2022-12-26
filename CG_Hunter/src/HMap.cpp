@@ -28,6 +28,10 @@ HModel* HMap::get_map_model() {
 	return _map_model;
 }
 
+vector<Model_Data>& HMap::get_draw_model() {
+	return _draw_model;
+}
+
 float HMap::get_height(float x, float y) {
 	float map_x = (x + _map_width / 2) / _map_width * (float)x_range;
 	float map_y = (-y + _map_height / 2) / _map_height * (float)y_range;
@@ -166,48 +170,21 @@ void HMap::gen_height_map() {
 void HMap::gen_landscape() {
 	srand((unsigned int)glfwGetTime());
 	/* Gen Grass, Trees */
-	HModel* grass = new HModel("./resources/model/map_model/map_tree1.fbx", false);
-	HModel* tree1 = new HModel("./resources/model/map_model/map_tree2.fbx", false);
-	HModel* tree2 = new HModel("./resources/model/map_model/map_tree3.fbx", false);
-	HModel* tree3 = new HModel("./resources/model/map_model/map_tree4.fbx", false);
-	HModel* tree4 = new HModel("./resources/model/map_model/map_tree5.fbx", false);
-	HModel* tree5 = new HModel("./resources/model/map_model/map_tree6.fbx", false);
+	string path = "./resources/model/map_model/map_tree";
 
-	grass->SetRotation(glm::quat(glm::highp_vec3(glm::radians(-90.0f), 0.0f, 0.0f)));
-	grass->SetScaling(glm::vec3(0.03f, 0.03f, 0.03f));
-	tree1->SetRotation(glm::quat(glm::highp_vec3(glm::radians(-90.0f), 0.0f, 0.0f)));
-	tree1->SetScaling(glm::vec3(0.03f, 0.03f, 0.03f));
+	for (int i = 1; i <= 10; i++) 
+		_landscapes.emplace_back(new HModel(path + to_string(i) + ".fbx", false));
 
-	tree2->SetRotation(glm::quat(glm::highp_vec3(glm::radians(-90.0f), 0.0f, 0.0f)));
-	tree2->SetScaling(glm::vec3(0.03f, 0.03f, 0.03f));
+	for (int i = 0; i < _landscapes.size(); i++) {
+		_landscapes[i]->SetRotation(glm::quat(glm::highp_vec3(glm::radians(-90.0f), 0.0f, 0.0f)));
+		_landscapes[i]->SetScaling(glm::vec3(0.05f, 0.05f, 0.08f));
+	}
 
-	tree3->SetRotation(glm::quat(glm::highp_vec3(glm::radians(-90.0f), 0.0f, 0.0f)));
-	tree3->SetScaling(glm::vec3(0.03f, 0.03f, 0.03f));
+	vector<int> num(_landscapes.size());
+	for (int i = 0; i < num.size(); i++)
+		num[i] = 100;
 
-	tree4->SetRotation(glm::quat(glm::highp_vec3(glm::radians(-90.0f), 0.0f, 0.0f)));
-	tree4->SetScaling(glm::vec3(0.03f, 0.03f, 0.03f));
-
-	tree5->SetRotation(glm::quat(glm::highp_vec3(glm::radians(-90.0f), 0.0f, 0.0f)));
-	tree5->SetScaling(glm::vec3(0.03f, 0.03f, 0.03f));
-
-	_landscapes.emplace_back(grass);
-	_landscapes.emplace_back(tree1);
-	_landscapes.emplace_back(tree2);
-	_landscapes.emplace_back(tree3);
-	_landscapes.emplace_back(tree4);
-	_landscapes.emplace_back(tree5);
-
-
-	vector<int> num(6);
-	num[0] = 150;
-	num[1] = 150;
-	num[2] = 150;
-	num[3] = 150;
-	num[4] = 150;
-	num[5] = 150;
-
-
-	for (int l = 0; l < 6; l++) {
+	for (int l = 0; l < _landscapes.size(); l++) {
 		for (int k = 0; k < num[l]; k++) {
 			int i, j;
 			bool flag = true;

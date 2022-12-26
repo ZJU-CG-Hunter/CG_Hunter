@@ -88,7 +88,100 @@ void HEngine::setup_magnifier() {
 }
 
 void HEngine::setup_depthMap() {
-	;
+	glGenFramebuffers(1, &depthMapFBO);
+	glGenTextures(1, &depthMap);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+	// attach depth texture as FBO's depth buffer
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	shadow_depth_shader = new HShader("./resources/shader/vs/shadow_empty.vert", "./resources/shader/fs/shadow_empty.frag");
+}
+
+void HEngine::draw_shadow() {
+	// 1. render depth of scene to texture (from light's perspective)
+	glm::vec3 hunter_position = _hunter->get_position();
+
+	glm::vec3 lightPos = hunter_position + glm::vec3(0.0f, 50.0f, 0.0f);
+
+
+	glm::mat4 lightProjection, lightView;
+	glm::mat4 lightSpaceMatrix;
+	float near_plane = 0.1f, far_plane = 200.0f;
+	lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, near_plane, far_plane);
+  lightView = glm::lookAt(lightPos, hunter_position, glm::vec3(0.0, 0.0, -1.0));
+	lightSpaceMatrix = lightProjection * lightView;
+
+
+	// render scene from light's point of view
+	shadow_depth_shader->use();
+	shadow_depth_shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+
+	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+	HShader* old_shaders;
+	for (int i = 0; i < _models.size(); i++) {
+		old_shaders = _models[i]->get_current_shader();
+		_models[i]->BindShader(shadow_depth_shader);
+		_models[i]->Draw();
+		_models[i]->BindShader(old_shaders);
+		
+	}
+	old_shaders = _hunter->get_current_shader();
+	_hunter->BindShader(shadow_depth_shader);
+	_hunter->Draw();
+	_hunter->BindShader(old_shaders);
+
+
+
+	old_shaders = _map->get_map_model()->get_current_shader();
+	_map->get_map_model()->BindShader(shadow_depth_shader);
+	_map->get_map_model()->Draw();
+	_map->get_map_model()->BindShader(old_shaders);
+
+	for (int i = 0; i < _map->get_draw_model().size(); i++) {
+		old_shaders = _map->get_draw_model()[i]._model->get_current_shader();
+
+		_map->get_draw_model()[i]._model->BindShader(shadow_depth_shader);
+
+		_map->get_draw_model()[i]._model->SetPosition(* _map->get_draw_model()[i]._adjust_pos);
+		_map->get_draw_model()[i]._model->Draw();
+		_map->get_draw_model()[i]._model->BindShader(old_shaders);
+
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// reset viewport
+	glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+
+	// set light uniforms
+	glm::vec3 lightDir(0.0f, 1.0f, 0.0f);
+	for (int i = 0; i < _shaders.size(); i++) {
+		_shaders[i]->use();
+		_shaders[i]->setVec3("cameraPos", _cameras[_current_camera]->Position);
+		_shaders[i]->setVec3("lightDir", lightDir);
+		_shaders[i]->setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+		_shaders[i]->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+		_shaders[i]->setInt("shadowMap", DEPTH_MAP_TEXTURE);
+
+	}
+	
+	glActiveTexture(GL_TEXTURE0 + DEPTH_MAP_TEXTURE);	
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	
 }
 
 
@@ -351,17 +444,17 @@ void HEngine::run() {
 		/* Event */
 		collision_detection();
 
-
 		glm::vec3 old_camera_position = _cameras[_current_camera]->Position;
 		if (_is_magnifier_draw) {
 			_cameras[_current_camera]->Position = _cameras[_current_camera]->Position + _cameras[_current_camera]->Front * glm::vec3(10.0f, 10.0f, 10.0f) - _cameras[_current_camera]->WorldUp * glm::vec3(5.0f, 5.0f, 5.0f);
 		}
 
+		/* generate shadow */
+		draw_shadow();
+
 		/* clear */
 		clear_buffer();
 
-
-		/* render map */
 		_map->Draw();
 
 		_hunter->Draw();

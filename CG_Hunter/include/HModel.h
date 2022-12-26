@@ -89,6 +89,7 @@ protected:
   Assimp::Importer* importer;
 
   HShader* shader;
+
   HCamera* camera;
 
   int animation_index;
@@ -142,6 +143,8 @@ public:
   virtual void Action(HMap* map, float duration_time);
 
   virtual void Event(Events event);
+
+  HShader* get_current_shader();
 
   HCollider* get_collider();
 

@@ -34,7 +34,6 @@ int main() {
 	/* Create new shaders */
 	engine->insert_shader("./resources/shader/vs/model.vert", "./resources/shader/fs/model.frag");
 	engine->insert_shader("./resources/shader/vs/skybox.vert", "./resources/shader/fs/skybox.frag");
-	engine->insert_shader("./resources/shader/vs/map.vert", "./resources/shader/fs/map.frag");
 
 	/* Create new map */
 	engine->create_map("./resources/map/map10fbx.fbx");
@@ -52,9 +51,9 @@ int main() {
 	//engine->insert_model("./resources/model/Pig4.fbx", false);
 	//engine->get_model(0)->SetPosition(glm::vec3(0.0, 0.0, 0.0));
 	//engine->get_model(0)->SetScaling(glm::vec3(0.1f, 0.1f, 0.1f));
-	engine->insert_model("./resources/model/Sheep.fbx", false);
-	engine->get_model(0)->SetPosition(glm::vec3(0.0, 0.0, 0.0));
-	engine->get_model(0)->SetScaling(glm::vec3(0.1f, 0.1f, 0.1f));
+	//engine->insert_model("./resources/model/Sheep.fbx", false);
+	//engine->get_model(0)->SetPosition(glm::vec3(0.0, 0.0, 0.0));
+	//engine->get_model(0)->SetScaling(glm::vec3(0.1f, 0.1f, 0.1f));
 
 
 	/* Set binding */
@@ -69,11 +68,11 @@ int main() {
 	//engine->get_model(0)->BindShader(engine->get_shader(0));
 	//engine->get_model(0)->BindCamera(engine->get_camera(0));
 	//engine->get_model(0)->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE + 10);
-	engine->get_model(0)->BindShader(engine->get_shader(0));
-	engine->get_model(0)->BindCamera(engine->get_camera(0));
-	engine->get_model(0)->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE + 10);
+	//engine->get_model(0)->BindShader(engine->get_shader(0));
+	//engine->get_model(0)->BindCamera(engine->get_camera(0));
+	//engine->get_model(0)->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE + 10);
 
-	engine->get_map()->get_map_model()->BindShader(engine->get_shader(2));
+	engine->get_map()->get_map_model()->BindShader(engine->get_shader(0));
 	engine->get_map()->get_map_model()->BindCamera(engine->get_camera(0));
 	engine->get_map()->get_map_model()->BindShaderUniformBuffer(BINDING_POINT_MAP);
 
@@ -87,6 +86,8 @@ int main() {
 	engine->get_hunter()->set_need_detect_collision(true);
 
 	engine->setup_magnifier();
+	engine->setup_depthMap();
+
 
 	engine->run();
 

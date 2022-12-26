@@ -33,7 +33,7 @@ void HModel::Draw()
   BindUniformData(buffer_offset, &model);
 
   // Bind projection and view
-  glm::mat4 perspective = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+  glm::mat4 perspective = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 200.0f);
   glm::mat4 view = camera->GetViewMatrix();
   BindUniformData(buffer_offset, &perspective);
   BindUniformData(buffer_offset, &view);
@@ -44,15 +44,7 @@ void HModel::Draw()
 
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-  glm::vec3 lightDir(0.0f, 1.0f, 0.0f);
-
-
-  shader->setVec3("cameraPos", camera->Position);
-  shader->setVec3("lightDir", lightDir);
-  shader->setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-
   for (unsigned int i = 0; i < meshes.size(); i++) {
-    shader->setMat4("ini_trans", meshes[i].ini_trans);
     meshes[i].Draw(shader);
   }
 
@@ -61,6 +53,10 @@ void HModel::Draw()
 
 void HModel::DrawBox(HShader* shader) {
   
+}
+
+HShader* HModel::get_current_shader() {
+  return shader;
 }
 
 

@@ -54,6 +54,8 @@ public:
 
 	HModel* get_map_model();
 
+	vector<Model_Data>& get_draw_model();
+
 	void insert_model(HModel* model);
 
 	void remove_model(HModel* model);

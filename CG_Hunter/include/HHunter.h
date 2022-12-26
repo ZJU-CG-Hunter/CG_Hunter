@@ -25,4 +25,6 @@ public:
   void turn(float xoffset, float yoffset);
 
   void update_camera();
+
+  glm::vec3 get_position();
 };
