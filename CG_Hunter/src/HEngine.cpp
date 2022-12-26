@@ -138,14 +138,12 @@ void HEngine::draw_shadow() {
 		_models[i]->BindShader(shadow_depth_shader);
 		_models[i]->Draw();
 		_models[i]->BindShader(old_shaders);
-		
+		//cout << "TT" << endl;
 	}
 	old_shaders = _hunter->get_current_shader();
 	_hunter->BindShader(shadow_depth_shader);
 	_hunter->Draw();
 	_hunter->BindShader(old_shaders);
-
-
 
 	old_shaders = _map->get_map_model()->get_current_shader();
 	_map->get_map_model()->BindShader(shadow_depth_shader);
@@ -459,15 +457,15 @@ void HEngine::run() {
 
 		_hunter->Draw();
 
-		//for (unsigned int i = 0; i < _models.size(); i++)
-		//	_models[i]->Draw();
+		for (unsigned int i = 0; i < _models.size(); i++)
+			_models[i]->Draw();
+
+		/* render skybox */
+		_skybox[_current_skybox]->Draw();
 
 		draw_magnifier();
 
 		_cameras[_current_camera]->Position = old_camera_position;
-
-		/* render skybox */
-		_skybox[_current_skybox]->Draw();
 
 		/* swap buffers and poll IO events */
 		glfwSwapBuffers(_windows[_current_window]);

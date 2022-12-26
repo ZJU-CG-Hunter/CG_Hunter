@@ -41,6 +41,7 @@ void HSkybox::BindCamera(HCamera* camera) {
 }
 
 void HSkybox::BindShaderUniformBuffer(unsigned int bind_point) {
+	_binding_point = bind_point;
 	glBindBufferBase(GL_UNIFORM_BUFFER, bind_point, _skybox_buffer_id);
 }
 

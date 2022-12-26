@@ -46,7 +46,7 @@ const float Scale_Z = 200.0f;
 const int land_x_range = 3;
 const int land_y_range = 3;
 
-const float Y_OFFSET = 3.5f;
+const float Y_OFFSET = 0.0f;
 
 const float DEFALUT_NEARBY_RANGE = 5.0f;
 

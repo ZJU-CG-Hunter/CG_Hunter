@@ -82,6 +82,7 @@ void HModel::Action(HMap* map, float duration_time) {
   UpdateBoneTransform();
   UpdateColliderTransform();
   AdjustStepOnGround(map);
+  
 }
 
 void HModel::Event(Events event) {

@@ -48,38 +48,40 @@ int main() {
 	engine->set_skybox(0);
 
 
-	//engine->insert_model("./resources/model/Pig4.fbx", false);
-	//engine->get_model(0)->SetPosition(glm::vec3(0.0, 0.0, 0.0));
-	//engine->get_model(0)->SetScaling(glm::vec3(0.1f, 0.1f, 0.1f));
+	engine->insert_model("./resources/model/Pig4.fbx", false);
+	engine->get_model(0)->SetPosition(glm::vec3(0.0, 0.0, 0.0));
+	engine->get_model(0)->SetScaling(glm::vec3(0.01f, 0.01f, 0.01f));
 	//engine->insert_model("./resources/model/Sheep.fbx", false);
 	//engine->get_model(0)->SetPosition(glm::vec3(0.0, 0.0, 0.0));
 	//engine->get_model(0)->SetScaling(glm::vec3(0.1f, 0.1f, 0.1f));
 
 
 	/* Set binding */
+	int biding_point = 0;
+
 	engine->get_hunter()->BindShader(engine->get_shader(0));
 	engine->get_hunter()->BindCamera(engine->get_camera(0));
-	engine->get_hunter()->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE);
+	engine->get_hunter()->BindShaderUniformBuffer(biding_point++);
 
 	engine->get_skybox(0)->BindShader(engine->get_shader(1));
 	engine->get_skybox(0)->BindCamera(engine->get_camera(0));
-	engine->get_skybox(0)->BindShaderUniformBuffer(BINDING_POINT_SKYBOX);
+	engine->get_skybox(0)->BindShaderUniformBuffer(biding_point++);
 
-	//engine->get_model(0)->BindShader(engine->get_shader(0));
-	//engine->get_model(0)->BindCamera(engine->get_camera(0));
-	//engine->get_model(0)->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE + 10);
+	engine->get_model(0)->BindShader(engine->get_shader(0));
+	engine->get_model(0)->BindCamera(engine->get_camera(0));
+	engine->get_model(0)->BindShaderUniformBuffer(biding_point++);
 	//engine->get_model(0)->BindShader(engine->get_shader(0));
 	//engine->get_model(0)->BindCamera(engine->get_camera(0));
 	//engine->get_model(0)->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE + 10);
 
 	engine->get_map()->get_map_model()->BindShader(engine->get_shader(0));
 	engine->get_map()->get_map_model()->BindCamera(engine->get_camera(0));
-	engine->get_map()->get_map_model()->BindShaderUniformBuffer(BINDING_POINT_MAP);
+	engine->get_map()->get_map_model()->BindShaderUniformBuffer(biding_point++);
 
 	for (int i = 0; i < engine->get_map()->get_landscape().size(); i++) {
 		engine->get_map()->get_landscape()[i]->BindShader(engine->get_shader(0));
 		engine->get_map()->get_landscape()[i]->BindCamera(engine->get_camera(0));
-		engine->get_map()->get_landscape()[i]->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE + i + 1);
+		engine->get_map()->get_landscape()[i]->BindShaderUniformBuffer(biding_point++);
 	}
 	
 	/* Set collision */
