@@ -6,7 +6,6 @@ HModel::HModel(string const& path, bool gamma) : gammaCorrection(gamma)
 {
   genModelBuffer();
   loadModel(path);
-  genModelCollider();
 }
 
 HModel::~HModel() {
@@ -82,7 +81,7 @@ void HModel::Action(HMap* map, float duration_time) {
   UpdateBoneTransform();
   UpdateColliderTransform();
   AdjustStepOnGround(map);
-  
+  map->update_model(this);
 }
 
 void HModel::Event(Events event) {
@@ -181,6 +180,9 @@ void HModel::loadModel(string const& path)
   // process ASSIMP's root node recursively
   processNode(scene->mRootNode);
   cout << "In loadModel() Animations num: " << scene->mNumAnimations << endl;
+
+
+
 }
 
 void HModel::BindShader(HShader* model_shader) {
@@ -196,10 +198,19 @@ void HModel::genModelCollider() {
 
   for (int i = 0; i < meshes.size(); i++) {
     for (int j = 0; j < meshes[i].vertices.size(); j++) {
+      glm::vec3 position = meshes[i].vertices[j].Position;
+      glm::mat4 vertex_bone_offset(0.0f);
+      if (meshes[i].vertices[j].num_bones > 0) {
+        for (int k = 0; k < meshes[i].vertices[j].num_bones; k++) {
+          vertex_bone_offset += bones[meshes[i].vertices[j].m_BoneIDs[k]].bone_transform * meshes[i].vertices[j].m_Weights[k];
+        }
+        position = glm_vec4_to_glm_vec3(vertex_bone_offset * glm::vec4(position, 1.0f));
+      }
+  
       vector<float> temp;
-      temp.push_back(meshes[i].vertices[j].Position.x);
-      temp.push_back(meshes[i].vertices[j].Position.y);
-      temp.push_back(meshes[i].vertices[j].Position.z);
+      temp.push_back(position.x);
+      temp.push_back(position.y);
+      temp.push_back(position.z);
 
       v.push_back(temp);
     }
@@ -403,6 +414,7 @@ HMesh HModel::processMesh(aiMesh* mesh)
 }
 
 HCollider* HModel::get_collider() {
+  genModelCollider();
   return collider;
 }
 

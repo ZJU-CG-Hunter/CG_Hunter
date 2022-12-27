@@ -58,6 +58,8 @@ const unsigned int BINDING_POINT_MODEL_BASE = 2;
 
 const unsigned int DEPTH_MAP_TEXTURE = 14;
 
+const int LANDSCAPE_NUM = 2000;
+
 enum class Event_Type {
   Collision,
   Watching,

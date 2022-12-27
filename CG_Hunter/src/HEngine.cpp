@@ -1,8 +1,5 @@
 #include <HEngine.h>
 
-
-
-
 HEngine::HEngine(): _deltatime(0.0f), _lasttime(0.0f) , _current_window(-1), _lastX(SCR_WIDTH / 2.0f), _lastY(SCR_HEIGHT / 2.0f), _firstMouse(true) {
 	ini_window_setting();
 	ini_stb_setting();
@@ -107,6 +104,7 @@ void HEngine::setup_depthMap() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	shadow_depth_shader = new HShader("./resources/shader/vs/shadow_empty.vert", "./resources/shader/fs/shadow_empty.frag");
+	shadow_depth_shader_tree = new HShader("./resources/shader/vs/shadow_empty_tree.vert", "./resources/shader/fs/shadow_empty_tree.frag");
 }
 
 void HEngine::draw_shadow() {
@@ -127,6 +125,8 @@ void HEngine::draw_shadow() {
 	// render scene from light's point of view
 	shadow_depth_shader->use();
 	shadow_depth_shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+	shadow_depth_shader_tree->use();
+	shadow_depth_shader_tree->setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
 	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
@@ -150,15 +150,12 @@ void HEngine::draw_shadow() {
 	_map->get_map_model()->Draw();
 	_map->get_map_model()->BindShader(old_shaders);
 
-	for (int i = 0; i < _map->get_draw_model().size(); i++) {
-		old_shaders = _map->get_draw_model()[i]._model->get_current_shader();
+	for (int i = 0; i < _map->get_landscape().size(); i++) {
+		old_shaders = _map->get_landscape()[i]->get_current_shader();
 
-		_map->get_draw_model()[i]._model->BindShader(shadow_depth_shader);
-
-		_map->get_draw_model()[i]._model->SetPosition(* _map->get_draw_model()[i]._adjust_pos);
-		_map->get_draw_model()[i]._model->Draw();
-		_map->get_draw_model()[i]._model->BindShader(old_shaders);
-
+		_map->get_landscape()[i]->BindShader(shadow_depth_shader_tree);
+		_map->get_landscape()[i]->Draw();
+		_map->get_landscape()[i]->BindShader(old_shaders);
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -242,6 +239,10 @@ void HEngine::draw_magnifier() {
 
 void HEngine::is_draw_magnifier(bool flag) {
 	_is_magnifier_draw = flag;
+	if (flag)
+		_cameras[_current_camera]->Zoom = ZOOM - 25.0f;
+	else
+		_cameras[_current_camera]->Zoom = ZOOM;
 }
 
 
@@ -400,7 +401,7 @@ void HEngine::collision_detection() {
 
 	if (_hunter->is_need_detect_collision()) {
 		nearby.clear();
-		nearby = _map->get_model_nearby(_hunter, 0.10f);
+		nearby = _map->get_model_nearby(_hunter, 5.0f);
 
 		for (int i = 0; i < nearby.size(); i++) {
 			if(nearby[i]._adjust_pos)
@@ -426,11 +427,14 @@ void HEngine::run() {
 	ini_render_setting();
 
 	while (!glfwWindowShouldClose(_windows[_current_window])) {
+		processInput();
+		glfwPollEvents();
+
+		/* Event */
+		collision_detection();
+
 		/* Process time */
 		adjust_time();
-
-		/* input */
-		processInput();
 
 		/* action */
 		_hunter->Action(_map, _deltatime);
@@ -438,14 +442,6 @@ void HEngine::run() {
 
 		for (unsigned int i = 0; i < _models.size(); i++)
 			_models[i]->Action(_map, _deltatime);
-
-		/* Event */
-		collision_detection();
-
-		glm::vec3 old_camera_position = _cameras[_current_camera]->Position;
-		if (_is_magnifier_draw) {
-			_cameras[_current_camera]->Position = _cameras[_current_camera]->Position + _cameras[_current_camera]->Front * glm::vec3(10.0f, 10.0f, 10.0f) - _cameras[_current_camera]->WorldUp * glm::vec3(5.0f, 5.0f, 5.0f);
-		}
 
 		/* generate shadow */
 		draw_shadow();
@@ -465,11 +461,11 @@ void HEngine::run() {
 
 		draw_magnifier();
 
-		_cameras[_current_camera]->Position = old_camera_position;
 
 		/* swap buffers and poll IO events */
 		glfwSwapBuffers(_windows[_current_window]);
-		glfwPollEvents();
+
+
 	}
 
 	_windows.erase(_windows.begin()+_current_window);
@@ -544,6 +540,12 @@ Collision HEngine::get_collide_type(HModel* model1, HModel* model2)
 	glm::mat4 wvp1 = model1->GetPositionMat() * model1->GetRotationMat() * model1->GetScalingMat();
 	glm::mat4 wvp2 = model2->GetPositionMat() * model2->GetRotationMat() * model2->GetScalingMat();
 
+	/*cout << "min_x: " << model2->min_x << "max_x: " << model2->max_x << "min_y: " << model2->min_y << "max_y: " << model2->max_y << "min_z: " << model2->min_z << "max_z: " << model2->max_z << endl;
+
+	for (int i = 0; i < 8; i++)
+		cout << "Ini:Points1: " << a->get_Points(i).x << ", " << a->get_Points(i).y << ", " << a->get_Points(i).z << endl;
+	for (int i = 0; i < 8; i++)
+		cout << "Ini:Points2: " << b->get_Points(i).x << ", " << b->get_Points(i).y << ", " << b->get_Points(i).z << endl;*/
 
 	for (int i = 0; i < 8; i++) {
 		Points1[i] = glm_vec4_to_glm_vec3(wvp1 * glm::vec4(a->get_Points(i), 1.0f));
@@ -552,44 +554,19 @@ Collision HEngine::get_collide_type(HModel* model1, HModel* model2)
 
 	//show_mat4(wvp1, "wvp1");
 	//show_mat4(wvp2, "wvp2");
-	/*for(int i = 0; i<2; i++)
-		cout << "Points1: " << Points1[i].x << ", " << Points1[i].y << ", " << Points1[i].z << endl;
-	for(int i = 0; i<2; i++)
-		cout << "Points2: " << Points2[i].x << ", " << Points2[i].y << ", " << Points2[i].z << endl;*/
+	//for(int i = 0; i<8; i++)
+	//	cout << "Points1: " << Points1[i].x << ", " << Points1[i].y << ", " << Points1[i].z << endl;
+	//for(int i = 0; i<8; i++)
+	//	cout << "Points2: " << Points2[i].x << ", " << Points2[i].y << ", " << Points2[i].z << endl;
 	
 	collide_bool = if_collide(Points1, Points2);
 	
-	//if(collide_bool)
-	 //cout << "Big Box detection" << endl;
-
-	if (collide_bool)
-	{
-		collide_bool = false;
-		for (int i = 0; i < model1->get_meshes().size(); i++)
-		{
-			a = model1->get_meshes()[i].ini_collider;
-			wvp1 = model1->get_meshes()[i].mesh_transform_mat;
-			for (int j = 0; j < model2->get_meshes().size(); j++)
-			{
-				b = model2->get_meshes()[j].ini_collider;
-				wvp2 = model2->get_meshes()[j].mesh_transform_mat;
-
-				for (int k = 0; k < 8; k++) {
-					Points1[k] = glm_vec4_to_glm_vec3(wvp1 * glm::vec4(a->get_Points(i), 1.0f));
-					Points2[k] = glm_vec4_to_glm_vec3(wvp2 * glm::vec4(b->get_Points(i), 1.0f));
-				}
-
-				if (if_collide(Points1, Points2)) {
-					collide_bool = true;
-					model_1_meshes_index.emplace_back(i);
-					model_2_meshes_index.emplace_back(j);
-				}
-			}
-		}
-	}
-
+	if(collide_bool)
+	 cout << "Big Box detection" << endl;
 	return Collision(collide_bool, model1, model2, model_1_meshes_index, model_2_meshes_index);
 }
+
+
 
 bool HEngine::if_collide(vector<glm::vec3> Points1, vector<glm::vec3> Points2)
 {

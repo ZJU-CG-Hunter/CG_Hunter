@@ -1,7 +1,6 @@
 #pragma once
 
-#include <HModel.h>
-
+#include <HTree.h>
 #include <vector>
 #include <set>
 
@@ -33,11 +32,9 @@ class HMap {
 private:
 	HModel* _map_model; /* The model of the map */
 
-	vector<HModel*> _landscapes;
+	vector<HTree*> _landscapes;
 	
 	vector<vector<Map_Data>> _map_data;
-
-	vector<Model_Data> _draw_model;
 
 	float _map_width;
 
@@ -54,15 +51,13 @@ public:
 
 	HModel* get_map_model();
 
-	vector<Model_Data>& get_draw_model();
-
 	void insert_model(HModel* model);
 
 	void remove_model(HModel* model);
 
 	void update_model(HModel* model);
 
-	vector<HModel*> get_landscape();
+	vector<HTree*> get_landscape();
 
 	vector<Model_Data> get_model_nearby(HModel* model, float range = DEFALUT_NEARBY_RANGE);
 

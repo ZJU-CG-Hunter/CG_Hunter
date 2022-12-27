@@ -32,6 +32,7 @@
     </ClInclude>
     <ClInclude Include="include\HShader.h" />
     <ClInclude Include="include\HSkybox.h" />
+    <ClInclude Include="include\HTree.h" />
     <ClInclude Include="include\utility.h" />
   </ItemGroup>
   <ItemGroup>
@@ -39,13 +40,15 @@
     <None Include="resources\shader\fs\magnifier.frag" />
     <None Include="resources\shader\fs\model.frag" />
     <None Include="resources\shader\fs\shadow_empty.frag" />
+    <None Include="resources\shader\fs\shadow_empty_tree.frag" />
     <None Include="resources\shader\fs\skybox.frag" />
-    <None Include="resources\shader\fs\test.frag" />
+    <None Include="resources\shader\fs\tree.frag" />
     <None Include="resources\shader\vs\magnifier.vert" />
     <None Include="resources\shader\vs\model.vert" />
     <None Include="resources\shader\vs\shadow_empty.vert" />
+    <None Include="resources\shader\vs\shadow_empty_tree.vert" />
     <None Include="resources\shader\vs\skybox.vert" />
-    <None Include="resources\shader\vs\test.vert" />
+    <None Include="resources\shader\vs\tree.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c" />
@@ -58,6 +61,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\HSkybox.cpp" />
+    <ClCompile Include="src\HTree.cpp" />
     <ClCompile Include="src\main.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>

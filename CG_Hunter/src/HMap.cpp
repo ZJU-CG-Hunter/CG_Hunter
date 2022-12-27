@@ -17,19 +17,14 @@ void HMap::Draw() {
 	_map_model->Draw();
 
 	//cout << "Size: " << _draw_model.size() << endl;
-	for (int i = 0; i < _draw_model.size(); i++) {
-		_draw_model[i]._model->position = *_draw_model[i]._adjust_pos;
-		_draw_model[i]._model->Draw();
+	for (int i = 0; i < _landscapes.size(); i++) {
+		_landscapes[i]->Draw();
 	}
 	
 }
 
 HModel* HMap::get_map_model() {
 	return _map_model;
-}
-
-vector<Model_Data>& HMap::get_draw_model() {
-	return _draw_model;
 }
 
 float HMap::get_height(float x, float y) {
@@ -173,18 +168,19 @@ void HMap::gen_landscape() {
 	string path = "./resources/model/map_model/map_tree";
 
 	for (int i = 1; i <= 10; i++) 
-		_landscapes.emplace_back(new HModel(path + to_string(i) + ".fbx", false));
+		_landscapes.emplace_back(new HTree(path + to_string(i) + ".fbx", false));
 
 	for (int i = 0; i < _landscapes.size(); i++) {
-		_landscapes[i]->SetRotation(glm::quat(glm::highp_vec3(glm::radians(-90.0f), 0.0f, 0.0f)));
+		_landscapes[i]->SetRotation(glm::quat(glm::highp_vec3(glm::radians(-90.0f), glm::radians((float)(rand()%90)), 0.0f)));
 		_landscapes[i]->SetScaling(glm::vec3(0.05f, 0.05f, 0.08f));
 	}
 
 	vector<int> num(_landscapes.size());
 	for (int i = 0; i < num.size(); i++)
-		num[i] = 100;
+		num[i] = LANDSCAPE_NUM/num.size();
 
 	for (int l = 0; l < _landscapes.size(); l++) {
+		vector<glm::mat4> tree_models;
 		for (int k = 0; k < num[l]; k++) {
 			int i, j;
 			bool flag = true;
@@ -194,24 +190,30 @@ void HMap::gen_landscape() {
 				j = rand() % y_range;
 
 				for (int t = 0; t < _map_data[j][i]._models.size(); t++)
-					if (_map_data[j][i]._models[t]._model == _landscapes[l] && _map_data[j][i]._height != INVALID_HEIGHT)
+					if (_map_data[j][i]._models[t]._model == _landscapes[l])
 						flag = true;
+				if (_map_data[j][i]._height == INVALID_HEIGHT)
+					flag = true;
 			}
 
-			cout << "l: " << l << " k: " << k << endl;
-		
 			float x = -_map_width / 2 + (float)i / (float)x_range * _map_width;
 			float z = _map_height / 2 - (float)j / (float)y_range * _map_height;
 			float y = _map_data[j][i]._height;
 
 			glm::vec3* adjust_pos= new glm::vec3(x, y, z);
 			_map_data[j][i]._models.emplace_back(Model_Data(_landscapes[l], adjust_pos));
-			_draw_model.emplace_back(Model_Data(_landscapes[l], adjust_pos));
+			
+			glm::mat4 identity(1.0f);
+			glm::mat4 tree_transform = glm::translate(identity, glm::vec3(*adjust_pos)) * _landscapes[l]->GetRotationMat() * _landscapes[l]->GetScalingMat();
+			tree_models.emplace_back(tree_transform);
 		}
+		//_landscapes[l]->bind_instance_VBO(tree_models);
+		_landscapes[l]->set_models(tree_models);
+		_landscapes[l]->set_num(num[l]);
 	}
 }
 
-vector<HModel*> HMap::get_landscape() {
+vector<HTree*> HMap::get_landscape() {
 	return _landscapes;
 }
 

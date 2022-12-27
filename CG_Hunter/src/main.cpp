@@ -15,7 +15,6 @@ int main() {
 
   engine = new HEngine();
 
-
 	/* Create new window */
 	engine->insert_window(SCR_WIDTH, SCR_HEIGHT, "CG_Hunter");
   engine->set_current_window(0);
@@ -34,6 +33,7 @@ int main() {
 	/* Create new shaders */
 	engine->insert_shader("./resources/shader/vs/model.vert", "./resources/shader/fs/model.frag");
 	engine->insert_shader("./resources/shader/vs/skybox.vert", "./resources/shader/fs/skybox.frag");
+	engine->insert_shader("./resources/shader/vs/tree.vert", "./resources/shader/fs/tree.frag");
 
 	/* Create new map */
 	engine->create_map("./resources/map/map10fbx.fbx");
@@ -48,7 +48,7 @@ int main() {
 	engine->set_skybox(0);
 
 
-	engine->insert_model("./resources/model/Pig4.fbx", false);
+	engine->insert_model("./resources/model/Pig1.fbx", false);
 	engine->get_model(0)->SetPosition(glm::vec3(0.0, 0.0, 0.0));
 	engine->get_model(0)->SetScaling(glm::vec3(0.01f, 0.01f, 0.01f));
 	//engine->insert_model("./resources/model/Sheep.fbx", false);
@@ -79,9 +79,10 @@ int main() {
 	engine->get_map()->get_map_model()->BindShaderUniformBuffer(biding_point++);
 
 	for (int i = 0; i < engine->get_map()->get_landscape().size(); i++) {
-		engine->get_map()->get_landscape()[i]->BindShader(engine->get_shader(0));
+		engine->get_map()->get_landscape()[i]->BindShader(engine->get_shader(2));
 		engine->get_map()->get_landscape()[i]->BindCamera(engine->get_camera(0));
 		engine->get_map()->get_landscape()[i]->BindShaderUniformBuffer(biding_point++);
+
 	}
 	
 	/* Set collision */

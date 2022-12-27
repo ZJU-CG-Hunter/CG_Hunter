@@ -47,6 +47,9 @@
     <ClInclude Include="include\HHunter.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="include\HTree.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shader\vs\skybox.vert">
@@ -62,12 +65,6 @@
     <None Include="resources\shader\vs\model.vert">
       <Filter>资源文件</Filter>
     </None>
-    <None Include="resources\shader\vs\test.vert">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="resources\shader\fs\test.frag">
-      <Filter>资源文件</Filter>
-    </None>
     <None Include="resources\shader\vs\magnifier.vert">
       <Filter>资源文件</Filter>
     </None>
@@ -78,6 +75,18 @@
       <Filter>资源文件</Filter>
     </None>
     <None Include="resources\shader\fs\shadow_empty.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resources\shader\fs\tree.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resources\shader\vs\tree.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resources\shader\fs\shadow_empty_tree.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resources\shader\vs\shadow_empty_tree.vert">
       <Filter>资源文件</Filter>
     </None>
   </ItemGroup>
@@ -110,6 +119,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\glad.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HTree.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
