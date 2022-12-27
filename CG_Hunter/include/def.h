@@ -59,10 +59,13 @@ const unsigned int BINDING_POINT_MODEL_BASE = 2;
 const unsigned int DEPTH_MAP_TEXTURE = 14;
 
 enum class Event_Type {
-  Collision,
-  Watching,
-  Picking,
-  Unknown
+	Collision,
+	Walk,
+	Run,
+	Stop,
+	Fall,
+	Shoot,
+	Unknown
 };
 
 enum class Map_Type {
@@ -76,7 +79,6 @@ class Events {
 public:
   Events(Event_Type event_type): _event_type(event_type){}
 
-protected:
   Event_Type _event_type;
 };
 

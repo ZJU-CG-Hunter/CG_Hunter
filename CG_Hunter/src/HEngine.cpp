@@ -246,7 +246,14 @@ void HEngine::is_draw_magnifier(bool flag) {
 	_is_magnifier_draw = flag;
 }
 
+void HEngine::shoot() {
+	_bullet->SetEventType();
 
+	glm::vec3 direction = get_camera(0)->Front;
+
+	_bullet->SetBulletDirection(direction);
+
+}
 
 void HEngine::set_window_inputmode(int window_index, int mode, int value) {
 	check_splited(window_index, _windows);
@@ -277,12 +284,27 @@ HMap* HEngine::get_map() {
 void HEngine::create_hunter(string const& path, const glm::vec3 front, const glm::vec3 up, const glm::vec3 right, const glm::vec3 worldup, float yaw, float pitch) {
 	_hunter = new HHunter(path, front, up, right, worldup, yaw, pitch);
 
+	_hunter->SetModelType(Model_Type::Hunter);
+
+	_hunter->SetEventType();
+
 	_map->insert_model(_hunter);
 }
 
 /* Return the map */
 HHunter* HEngine::get_hunter() {
 	return _hunter;
+}
+
+void HEngine::create_bullet(string const& path, bool gamma) {
+	_bullet = new HModel(path, gamma);
+
+	_bullet->SetModelType(Model_Type::Bullet);
+
+}
+
+HModel* HEngine::get_bullet() {
+	return _bullet;
 }
 
 void HEngine::insert_camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) {
@@ -337,9 +359,27 @@ HSkybox* HEngine::get_skybox(int skybox_index) {
 	return _skybox[skybox_index];
 }
 
+Model_Type HEngine::findModelType(string const& path) {
+	Model_Type model_type = Model_Type::Unknown;
+
+	if (path.find("Pig") != string::npos || path.find("Sheep") != string::npos)
+		model_type = Model_Type::Animal;
+
+	// may not be used
+	else if (path.find("bullet") != string::npos)
+		model_type = Model_Type::Bullet;
+
+	return model_type;
+}
 
 void HEngine::insert_model(string const& path, bool gamma) {
 	HModel* created_model = new HModel(path, gamma);
+
+	Model_Type model_type = findModelType(path);
+
+	created_model->SetModelType(model_type);
+
+	created_model->SetEventType();
 
 	_models.emplace_back(created_model);
 
@@ -352,6 +392,10 @@ HModel* HEngine::get_model(int model_index) {
 	check_splited(model_index, _models);
 	
 	return _models[model_index];
+}
+
+int HEngine::get_model_size() { 
+	return _models.size(); 
 }
 
 
@@ -384,14 +428,62 @@ void HEngine::processInput() {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) 
+	bool press = false;
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		Events event(Event_Type::Walk);
 		_hunter->move(Camera_Movement::FORWARD, _deltatime);
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		_hunter->Event(event, _deltatime);
+
+		_bullet->SetPosition(get_camera(0)->Position);
+		press = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		Events event(Event_Type::Walk);
 		_hunter->move(Camera_Movement::BACKWARD, _deltatime);
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		_hunter->Event(event, _deltatime);
+
+		_bullet->SetPosition(get_camera(0)->Position);
+		press = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		Events event(Event_Type::Walk);
 		_hunter->move(Camera_Movement::LEFT, _deltatime);
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		_hunter->Event(event, _deltatime);
+		
+		_bullet->SetPosition(get_camera(0)->Position);
+		press = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		Events event(Event_Type::Walk);
 		_hunter->move(Camera_Movement::RIGHT, _deltatime);
+		_hunter->Event(event, _deltatime);
+		
+		_bullet->SetPosition(get_camera(0)->Position);
+		press = true;
+	}
+
+	if (!press) {
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE) {
+			Events event(Event_Type::Stop);
+			_hunter->Event(event, _deltatime);
+			return;
+		}
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE) {
+			Events event(Event_Type::Stop);
+			_hunter->Event(event, _deltatime);
+			return;
+		}
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE) {
+			Events event(Event_Type::Stop);
+			_hunter->Event(event, _deltatime);
+			return;
+		}
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE) {
+			Events event(Event_Type::Stop);
+			_hunter->Event(event, _deltatime);
+			return;
+		}
+	}
 
 	_map->update_model(_hunter);
 
@@ -399,7 +491,7 @@ void HEngine::processInput() {
 
 void HEngine::collision_detection() {
 	vector<Model_Data> nearby;
-
+	// hunter
 	if (_hunter->is_need_detect_collision()) {
 		nearby.clear();
 		nearby = _map->get_model_nearby(_hunter, 0.10f);
@@ -409,11 +501,42 @@ void HEngine::collision_detection() {
 				nearby[i]._model->SetPosition(*nearby[i]._adjust_pos);
 
 			Collision collision_type = get_collide_type(_hunter, nearby[i]._model);
-			_hunter->Event(collision_type);
-			nearby[i]._model->Event(collision_type);
+			_hunter->Event(collision_type, _deltatime);
+			nearby[i]._model->Event(collision_type, _deltatime);
 		}
 	}
-	
+
+	// animal
+	for (int index = 0; index < _models.size(); index++) {
+		if (_models[index]->is_need_detect_collision()) {
+			nearby.clear();
+			nearby = _map->get_model_nearby(_models[index], 0.10f);
+
+			for (int i = 0; i < nearby.size(); i++) {
+				if (nearby[i]._adjust_pos)
+					nearby[i]._model->SetPosition(*nearby[i]._adjust_pos);
+
+				Collision collision_type = get_collide_type(_models[index], nearby[i]._model);
+				_models[index]->Event(collision_type, _deltatime);
+				nearby[i]._model->Event(collision_type, _deltatime);
+			}
+		}
+	}
+
+	// bullet
+	if (_bullet->is_need_detect_collision()) {
+		nearby.clear();
+		nearby = _map->get_model_nearby(_bullet, 0.10f);
+
+		for (int i = 0; i < nearby.size(); i++) {
+			if (nearby[i]._adjust_pos)
+				nearby[i]._model->SetPosition(*nearby[i]._adjust_pos);
+
+			Collision collision_type = get_collide_type(_bullet, nearby[i]._model);
+			_bullet->BulletEvent(get_camera(0)->Position);
+			nearby[i]._model->Event(collision_type, _deltatime);
+		}
+	}
 
 }
 
@@ -431,15 +554,17 @@ void HEngine::run() {
 		/* Process time */
 		adjust_time();
 
-		/* input */
-		processInput();
-
 		/* action */
 		_hunter->Action(_map, _deltatime);
 		_hunter->update_camera();
 
+		_bullet->Action(_map, _deltatime);
+
 		for (unsigned int i = 0; i < _models.size(); i++)
 			_models[i]->Action(_map, _deltatime);
+
+		/* input */
+		processInput();
 
 		/* Event */
 		collision_detection();
@@ -459,8 +584,11 @@ void HEngine::run() {
 
 		_hunter->Draw();
 
-		//for (unsigned int i = 0; i < _models.size(); i++)
-		//	_models[i]->Draw();
+		if(_bullet->GetEventType() == Event_Type::Shoot)
+			_bullet->Draw();  //debug
+
+		for (unsigned int i = 0; i < _models.size(); i++)
+			_models[i]->Draw();
 
 		draw_magnifier();
 

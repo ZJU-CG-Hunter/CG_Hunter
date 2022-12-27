@@ -10,12 +10,70 @@ HHunter::HHunter(string const& path, const glm::vec3 front, const glm::vec3 up, 
 	Pitch = pitch;
 }
 
-void HHunter::Event(Collision event) {
-	if (event._is_collide) {
+void HHunter::Event(Collision event, float duration_time) {
+	if (scene->mNumAnimations <= 0) return;
+
+	// Collision
+	if (event._event_type == Event_Type::Collision) {
+		if (event._is_collide == false)  return;
+
 		cout << "Collision happens!" << endl;
+		animation_index = 3;
+
+		if (last_event != Event_Type::Stop) {
+			animation_ticks = 0;
+			last_event = Event_Type::Stop;
+		}
+		else
+			CalCurrentTicks(duration_time);
 		position = last_position;
 	}
 
+	UpdateBoneTransform();
+	UpdateColliderTransform();
+}
+
+void HHunter::Event(Events event, float duration_time) {
+	if (scene->mNumAnimations <= 0) return;
+
+	// Stop(Key control)
+	if (event._event_type == Event_Type::Stop) {
+		animation_index = 3;
+
+		if (last_event != Event_Type::Stop) {
+			animation_ticks = 0;
+			last_event = Event_Type::Stop;
+		}
+		else
+			CalCurrentTicks(duration_time);
+	}
+
+	// Walk
+	if (event._event_type == Event_Type::Walk) {
+		animation_index = 0;
+
+		if (last_event != Event_Type::Walk) {
+			animation_ticks = 0;
+			last_event = Event_Type::Walk;
+		}
+		else
+			CalCurrentTicks(duration_time);
+	}
+
+	// Run
+	if (event._event_type == Event_Type::Run) {
+		animation_index = 1;
+
+		if (last_event != Event_Type::Run) {
+			animation_ticks = 0;
+			last_event = Event_Type::Run;
+		}
+		else
+			CalCurrentTicks(duration_time);
+	}
+
+	UpdateBoneTransform();
+	UpdateColliderTransform();
 }
 
 

@@ -27,11 +27,10 @@
 using namespace std;
 
 enum class Model_Type {
-  Pig,
-  Deer,
-  Hunter,
-  Arrow,
-  Unknown
+    Animal,
+    Hunter,
+    Bullet,
+    Unknown
 };
 
 class HModel;
@@ -103,6 +102,13 @@ protected:
 
   Model_Type model_type;
 
+  Event_Type last_event;
+
+  glm::vec3 last_position;
+
+  // bullet direction
+  glm::vec3 bullet_direction;
+
   float min_x, max_x;
   float min_y, max_y;
   float min_z, max_z;
@@ -142,7 +148,11 @@ public:
 
   virtual void Action(HMap* map, float duration_time);
 
-  virtual void Event(Events event);
+  virtual void Event(Collision event, float duration_time);
+
+  void BulletEvent(glm::vec3 init_position);
+
+  void move(float duration_time);
 
   HShader* get_current_shader();
 
@@ -156,11 +166,21 @@ public:
 
   void SetScaling(const glm::vec3& scaling_vec);
 
+  void SetBulletDirection(glm::vec3 direction);
+
+  void SetModelType(Model_Type type);
+
+  void SetEventType();
+
   glm::mat4 GetPositionMat();
 
   glm::mat4 GetRotationMat();
 
   glm::mat4 GetScalingMat();
+
+  Model_Type GetModelType();
+
+  Event_Type GetEventType();
 
   bool is_need_detect_collision();
 

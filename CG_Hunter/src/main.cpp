@@ -39,21 +39,26 @@ int main() {
 	engine->create_map("./resources/map/map10fbx.fbx");
 
 	/* Create new hunter */
-	engine->create_hunter("./resources/model/cube.fbx", glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.0f);
-	engine->get_hunter()->SetScaling(glm::vec3(0.6f, 0.6f, 0.6f)); // Set model scaling
+	engine->create_hunter("./resources/model/Pig4.fbx", glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.0f);
+	engine->get_hunter()->SetScaling(glm::vec3(0.005f, 0.005f, 0.005f)); // Set model scaling
 	engine->get_hunter()->SetPosition(glm::vec3(0.0, 20.0, 0.0));
 
 	/* Create new skybox */
 	engine->insert_skybox(default_skyboxvertices, default_skyboxfaces);
 	engine->set_skybox(0);
 
+	/* Create new bullet */
+	engine->create_bullet("./resources/model/bullet.fbx", false);
+	engine->get_bullet()->SetScaling(glm::vec3(0.2f, 0.2f, 0.2f));
+	engine->get_bullet()->SetPosition(engine->get_camera(0)->Position);
 
-	//engine->insert_model("./resources/model/Pig4.fbx", false);
+	/* Create models */
+	//engine->insert_model("./resources/model/cube.fbx", false);
 	//engine->get_model(0)->SetPosition(glm::vec3(0.0, 0.0, 0.0));
-	//engine->get_model(0)->SetScaling(glm::vec3(0.1f, 0.1f, 0.1f));
-	//engine->insert_model("./resources/model/Sheep.fbx", false);
-	//engine->get_model(0)->SetPosition(glm::vec3(0.0, 0.0, 0.0));
-	//engine->get_model(0)->SetScaling(glm::vec3(0.1f, 0.1f, 0.1f));
+	//engine->get_model(0)->SetScaling(glm::vec3(1.0f, 1.0f, 1.0f));
+	engine->insert_model("./resources/model/Sheep.fbx", false);
+	engine->get_model(0)->SetPosition(glm::vec3(0.0, 0.0, 0.0));
+	engine->get_model(0)->SetScaling(glm::vec3(0.005f, 0.005f, 0.005f));
 
 
 	/* Set binding */
@@ -65,12 +70,16 @@ int main() {
 	engine->get_skybox(0)->BindCamera(engine->get_camera(0));
 	engine->get_skybox(0)->BindShaderUniformBuffer(BINDING_POINT_SKYBOX);
 
+	engine->get_bullet()->BindShader(engine->get_shader(0));
+	engine->get_bullet()->BindCamera(engine->get_camera(0));
+	engine->get_bullet ()->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE + 12);
+
+	engine->get_model(0)->BindShader(engine->get_shader(0));
+	engine->get_model(0)->BindCamera(engine->get_camera(0));
+	engine->get_model(0)->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE + 11);
 	//engine->get_model(0)->BindShader(engine->get_shader(0));
 	//engine->get_model(0)->BindCamera(engine->get_camera(0));
-	//engine->get_model(0)->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE + 10);
-	//engine->get_model(0)->BindShader(engine->get_shader(0));
-	//engine->get_model(0)->BindCamera(engine->get_camera(0));
-	//engine->get_model(0)->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE + 10);
+	//engine->get_model(0)->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE + 11);
 
 	engine->get_map()->get_map_model()->BindShader(engine->get_shader(0));
 	engine->get_map()->get_map_model()->BindCamera(engine->get_camera(0));
@@ -84,6 +93,12 @@ int main() {
 	
 	/* Set collision */
 	engine->get_hunter()->set_need_detect_collision(true);
+
+	engine->get_bullet()->set_need_detect_collision(true);
+
+	for (int i = 0; i < engine->get_model_size(); i++) {
+		engine->get_model(i)->set_need_detect_collision(true);
+	}
 
 	engine->setup_magnifier();
 	engine->setup_depthMap();
@@ -141,6 +156,12 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		else if (action == GLFW_RELEASE)
 			engine->is_draw_magnifier(false);
 		break;
+
+	case GLFW_MOUSE_BUTTON_LEFT:
+		if (action == GLFW_PRESS) {
+			cout << "shoot" << endl;
+			engine->shoot();
+		}
 	}
 
 	return;

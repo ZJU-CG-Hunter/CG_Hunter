@@ -74,19 +74,87 @@ void HModel::UpdateColliderTransform() {
 }
 
 void HModel::Action(HMap* map, float duration_time) {
-  if(scene->mNumAnimations >0){
-    animation_index = 0;
+   // Natual
+  if(scene->mNumAnimations >0 && last_event != Event_Type::Fall){
+    animation_index = 3;
     CalCurrentTicks(duration_time);
   }
 
+  // Aniaml Fall
+  if (model_type == Model_Type::Animal && last_event == Event_Type::Fall) {
+      animation_index = 4;
+      float last_tick = animation_ticks;
+      CalCurrentTicks(duration_time);
+      if (animation_ticks >= scene->mAnimations[animation_index]->mDuration - 1) {
+          animation_ticks = last_tick;
+      }
+  }
+
+   // Bullet
+  if (model_type == Model_Type::Bullet) {
+      if (last_event == Event_Type::Shoot) {
+          move(duration_time);
+      }
+  }
+
+
   UpdateBoneTransform();
   UpdateColliderTransform();
+  if (model_type == Model_Type::Bullet)  return;
   AdjustStepOnGround(map);
 }
 
-void HModel::Event(Events event) {
-  //cout << "Not implemented, always ignore" << endl;
+void HModel::Event(Collision event, float duration_time) {
+    if (scene->mNumAnimations <= 0) return;
+
+    // Collision
+    if (event._event_type == Event_Type::Collision) {
+        if (event._is_collide == false)  return;
+
+        // Animal
+        if (model_type == Model_Type::Animal) {
+            if (event._model_2->GetModelType() == Model_Type::Bullet) {
+                animation_index = 4;
+                animation_ticks = 0;
+                last_event = Event_Type::Fall;
+            }
+            else {
+                animation_index = 3;
+
+                if (last_event != Event_Type::Stop) {
+                    animation_ticks = 0;
+                    last_event = Event_Type::Stop;
+                }
+                else
+                    CalCurrentTicks(duration_time);
+            }
+            position = last_position;
+        }
+
+    }
+    UpdateBoneTransform();
+    UpdateColliderTransform();
+        
 }
+
+void HModel::BulletEvent(glm::vec3 init_position) {
+    position = init_position;
+
+    last_event = Event_Type::Stop;
+
+    UpdateBoneTransform();
+    UpdateColliderTransform();
+}
+
+void HModel::move(float duration_time) {
+    float velocity = 10*SPEED * duration_time;
+
+    last_position = position;
+
+    position += bullet_direction * velocity;
+
+}
+
 
 void HModel::UpdateBoneTransform() {
   /* Update the bone matrix */
@@ -95,7 +163,7 @@ void HModel::UpdateBoneTransform() {
 
 void HModel::AdjustStepOnGround(HMap* map) {
   /* Always step on the ground */
-      
+
   position.y = map->get_height(position.x, position.z) + Y_OFFSET;
 
   //cout << "Height: " << position.y << endl;
@@ -116,6 +184,7 @@ void HModel::BindShaderUniformBuffer(int binding_point) {
 
 void HModel::SetPosition(const glm::vec3& position_vec) {
   position = position_vec;
+
 }
 
 void HModel::SetRotation(const glm::quat& rotation_quat) {
@@ -126,6 +195,24 @@ void HModel::SetScaling(const glm::vec3& scaling_vec) {
   scaling = scaling_vec;
 }
 
+void HModel::SetBulletDirection(glm::vec3 direction) {
+    bullet_direction = direction;
+}
+
+void HModel::SetModelType(Model_Type type) {
+    model_type = type;
+}
+
+void HModel::SetEventType() {
+    if (model_type == Model_Type::Hunter)
+        last_event = Event_Type::Stop;
+
+    else if (model_type == Model_Type::Animal)
+        last_event = Event_Type::Walk;
+
+    else if (model_type == Model_Type::Bullet)
+        last_event = Event_Type::Shoot;
+}
 
 glm::mat4 HModel::GetPositionMat() {
   glm::mat4 identity(1.0f);
@@ -139,6 +226,14 @@ glm::mat4 HModel::GetRotationMat() {
 glm::mat4 HModel::GetScalingMat() {
   glm::mat4 identity(1.0f);
   return glm::scale(identity, scaling);
+}
+
+Model_Type HModel::GetModelType() {
+    return model_type;
+}
+
+Event_Type HModel::GetEventType() {
+    return last_event;
 }
 
 bool HModel::is_need_detect_collision() {

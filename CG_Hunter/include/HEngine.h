@@ -34,6 +34,9 @@ protected:
 	// The hunter
 	HHunter* _hunter;
 
+	// The bullet
+	HModel* _bullet;
+
 	// The models in the engine
 	vector<HModel*> _models;
 
@@ -116,9 +119,17 @@ public:
 	/* Return the map */
 	HHunter* get_hunter();
 
+	HModel* get_bullet();
+
+	void create_bullet(string const& path, bool gamma);
+
 	void insert_model(string const& path, bool gamma);
 
 	HModel* get_model(int model_index);
+
+	int get_model_size();
+
+	Model_Type findModelType(string const& path);
 
 	/* Insert a new camera */
 	void insert_camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
@@ -169,6 +180,8 @@ public:
 	void draw_magnifier();
 
 	void is_draw_magnifier(bool flag);
+
+	void shoot();
 
 	void setup_depthMap();
 
