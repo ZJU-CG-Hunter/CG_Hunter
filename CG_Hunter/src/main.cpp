@@ -15,7 +15,6 @@ int main() {
 
   engine = new HEngine();
 
-
 	/* Create new window */
 	engine->insert_window(SCR_WIDTH, SCR_HEIGHT, "CG_Hunter");
   engine->set_current_window(0);
@@ -34,6 +33,7 @@ int main() {
 	/* Create new shaders */
 	engine->insert_shader("./resources/shader/vs/model.vert", "./resources/shader/fs/model.frag");
 	engine->insert_shader("./resources/shader/vs/skybox.vert", "./resources/shader/fs/skybox.frag");
+	engine->insert_shader("./resources/shader/vs/tree.vert", "./resources/shader/fs/tree.frag");
 
 	/* Create new map */
 	engine->create_map("./resources/map/map10fbx.fbx");
@@ -62,33 +62,36 @@ int main() {
 
 
 	/* Set binding */
+	int biding_point = 0;
+
 	engine->get_hunter()->BindShader(engine->get_shader(0));
 	engine->get_hunter()->BindCamera(engine->get_camera(0));
-	engine->get_hunter()->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE);
+	engine->get_hunter()->BindShaderUniformBuffer(biding_point++);
 
 	engine->get_skybox(0)->BindShader(engine->get_shader(1));
 	engine->get_skybox(0)->BindCamera(engine->get_camera(0));
-	engine->get_skybox(0)->BindShaderUniformBuffer(BINDING_POINT_SKYBOX);
+	engine->get_skybox(0)->BindShaderUniformBuffer(biding_point++);
 
 	engine->get_bullet()->BindShader(engine->get_shader(0));
 	engine->get_bullet()->BindCamera(engine->get_camera(0));
-	engine->get_bullet ()->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE + 12);
+	engine->get_bullet ()->BindShaderUniformBuffer(biding_point++);
 
 	engine->get_model(0)->BindShader(engine->get_shader(0));
 	engine->get_model(0)->BindCamera(engine->get_camera(0));
-	engine->get_model(0)->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE + 11);
+	engine->get_model(0)->BindShaderUniformBuffer(biding_point++);
 	//engine->get_model(0)->BindShader(engine->get_shader(0));
 	//engine->get_model(0)->BindCamera(engine->get_camera(0));
 	//engine->get_model(0)->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE + 11);
 
 	engine->get_map()->get_map_model()->BindShader(engine->get_shader(0));
 	engine->get_map()->get_map_model()->BindCamera(engine->get_camera(0));
-	engine->get_map()->get_map_model()->BindShaderUniformBuffer(BINDING_POINT_MAP);
+	engine->get_map()->get_map_model()->BindShaderUniformBuffer(biding_point++);
 
 	for (int i = 0; i < engine->get_map()->get_landscape().size(); i++) {
-		engine->get_map()->get_landscape()[i]->BindShader(engine->get_shader(0));
+		engine->get_map()->get_landscape()[i]->BindShader(engine->get_shader(2));
 		engine->get_map()->get_landscape()[i]->BindCamera(engine->get_camera(0));
-		engine->get_map()->get_landscape()[i]->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE + i + 1);
+		engine->get_map()->get_landscape()[i]->BindShaderUniformBuffer(biding_point++);
+
 	}
 	
 	/* Set collision */

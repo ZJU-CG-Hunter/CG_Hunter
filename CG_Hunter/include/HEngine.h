@@ -73,6 +73,7 @@ protected:
 	unsigned int depthMapFBO;
 
 	HShader* shadow_depth_shader;
+	HShader* shadow_depth_shader_tree;
 
 public:
 	/* Constructor of the Engine */

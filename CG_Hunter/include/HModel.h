@@ -109,10 +109,6 @@ protected:
   // bullet direction
   glm::vec3 bullet_direction;
 
-  float min_x, max_x;
-  float min_y, max_y;
-  float min_z, max_z;
-
   bool engine_detect_collision;
 
   bool first_record = true;
@@ -123,6 +119,10 @@ protected:
   int map_y = -1;
 
 public:
+  float min_x, max_x;
+  float min_y, max_y;
+  float min_z, max_z;
+
   // constructor, expects a filepath to a 3D model.
   HModel(string const& path, bool gamma);
 
@@ -136,7 +136,7 @@ public:
   void AdjustStepOnGround(HMap* map);
 
   // draws the model, and thus all its meshes
-  void Draw();
+  virtual void Draw();
 
   void DrawBox(HShader* shader);
 
@@ -150,7 +150,7 @@ public:
 
   virtual void Event(Collision event, float duration_time);
 
-  void BulletEvent(glm::vec3 init_position);
+  void BulletEvent(Collision event, glm::vec3 init_position);
 
   void move(float duration_time);
 
@@ -187,9 +187,9 @@ public:
   void set_need_detect_collision(bool flag);
 
 protected:
-  void genModelBuffer();
-
   void genModelCollider();
+
+  void genModelBuffer();
 
   void CalCurrentTicks(float duration_time);
 

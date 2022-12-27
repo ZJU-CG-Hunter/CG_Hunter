@@ -46,7 +46,7 @@ const float Scale_Z = 200.0f;
 const int land_x_range = 3;
 const int land_y_range = 3;
 
-const float Y_OFFSET = 3.5f;
+const float Y_OFFSET = 0.0f;
 
 const float DEFALUT_NEARBY_RANGE = 5.0f;
 
@@ -57,6 +57,8 @@ const unsigned int BINDING_POINT_MAP = 1;
 const unsigned int BINDING_POINT_MODEL_BASE = 2;
 
 const unsigned int DEPTH_MAP_TEXTURE = 14;
+
+const int LANDSCAPE_NUM = 1000;
 
 enum class Event_Type {
 	Collision,
