@@ -1,5 +1,6 @@
 #include <HEngine.h>
 
+
 HEngine* engine;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -12,6 +13,11 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
 
 int main() {
+
+	unsigned int map_seed = 0;
+	cout << "Welcome to Forest Hunter !" << endl;
+	cout << "Please enter the map seed: " << endl;
+	cin >> map_seed;
 
   engine = new HEngine();
 
@@ -34,13 +40,15 @@ int main() {
 	engine->insert_shader("./resources/shader/vs/model.vert", "./resources/shader/fs/model.frag");
 	engine->insert_shader("./resources/shader/vs/skybox.vert", "./resources/shader/fs/skybox.frag");
 	engine->insert_shader("./resources/shader/vs/tree.vert", "./resources/shader/fs/tree.frag");
+	engine->insert_shader("./resources/shader/vs/magnifier.vert", "./resources/shader/fs/magnifier.frag");
 
 	/* Create new map */
-	engine->create_map("./resources/map/map10fbx.fbx");
+	engine->create_map("./resources/map/map10fbx.fbx", map_seed);
 
 	/* Create new hunter */
-	engine->create_hunter("./resources/model/cube.fbx", glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.0f);
-	engine->get_hunter()->SetScaling(glm::vec3(0.6f, 0.6f, 0.6f)); // Set model scaling
+	engine->create_hunter("./resources/model/hunter.fbx", glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.0f);
+	engine->get_hunter()->SetScaling(glm::vec3(0.03f, 0.03f, 0.03f)); // Set model scaling
+	engine->get_hunter()->SetRotation(glm::vec3(-90.0f, 90.0f, 0.0f));
 	engine->get_hunter()->SetPosition(glm::vec3(0.0, 20.0, 0.0));
 
 	/* Create new skybox */
@@ -48,20 +56,31 @@ int main() {
 	engine->set_skybox(0);
 
 
-	engine->insert_model("./resources/model/Pig1.fbx", false);
-	engine->get_model(0)->SetPosition(glm::vec3(0.0, 0.0, 0.0));
+	/* Create model */
+	engine->insert_model("./resources/model/Pig.fbx", false, Model_Type::Pig);
+	engine->get_model(0)->SetPosition(glm::vec3(10.0, 0.0, 10.0));
 	engine->get_model(0)->SetScaling(glm::vec3(0.01f, 0.01f, 0.01f));
+	engine->get_map()->update_model(engine->get_model(0));
+	
+	engine->insert_model("./resources/model/bullet.fbx", false, Model_Type::Bullet);
+	engine->get_model(1)->SetScaling(glm::vec3(0.3f, 0.3f, 0.3f));
+	engine->get_model(1)->SetRotation(glm::vec3(-90.0f, 0.0f, 0.0f));
+
+
 	//engine->insert_model("./resources/model/Sheep.fbx", false);
 	//engine->get_model(0)->SetPosition(glm::vec3(0.0, 0.0, 0.0));
 	//engine->get_model(0)->SetScaling(glm::vec3(0.1f, 0.1f, 0.1f));
 
 
-	/* Set binding */
+	/* Set binding and collision */
 	int biding_point = 0;
 
 	engine->get_hunter()->BindShader(engine->get_shader(0));
+	engine->get_hunter()->BindMagnifierShader(engine->get_shader(3));
 	engine->get_hunter()->BindCamera(engine->get_camera(0));
 	engine->get_hunter()->BindShaderUniformBuffer(biding_point++);
+	engine->get_hunter()->set_need_detect_collision(true);
+	engine->get_hunter()->BindGun(engine->get_model(1));
 
 	engine->get_skybox(0)->BindShader(engine->get_shader(1));
 	engine->get_skybox(0)->BindCamera(engine->get_camera(0));
@@ -70,9 +89,13 @@ int main() {
 	engine->get_model(0)->BindShader(engine->get_shader(0));
 	engine->get_model(0)->BindCamera(engine->get_camera(0));
 	engine->get_model(0)->BindShaderUniformBuffer(biding_point++);
-	//engine->get_model(0)->BindShader(engine->get_shader(0));
-	//engine->get_model(0)->BindCamera(engine->get_camera(0));
-	//engine->get_model(0)->BindShaderUniformBuffer(BINDING_POINT_MODEL_BASE + 10);
+	engine->get_model(0)->set_need_detect_collision(false);
+
+
+	engine->get_model(1)->BindShader(engine->get_shader(2));
+	engine->get_model(1)->BindCamera(engine->get_camera(0));
+	engine->get_model(1)->BindShaderUniformBuffer(biding_point++);
+	engine->get_model(1)->set_need_detect_collision(true);
 
 	engine->get_map()->get_map_model()->BindShader(engine->get_shader(0));
 	engine->get_map()->get_map_model()->BindCamera(engine->get_camera(0));
@@ -85,12 +108,8 @@ int main() {
 
 	}
 	
-	/* Set collision */
-	engine->get_hunter()->set_need_detect_collision(true);
 
-	engine->setup_magnifier();
 	engine->setup_depthMap();
-
 
 	engine->run();
 
@@ -137,13 +156,12 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
 	switch (button){
 	case GLFW_MOUSE_BUTTON_RIGHT:
-		if (action == GLFW_PRESS) {
-			engine->is_draw_magnifier(true);
-			cout << "Press" << endl;
-		}
-		else if (action == GLFW_RELEASE)
-			engine->is_draw_magnifier(false);
+		engine->get_hunter()->aim((bool)action);
 		break;
+	case GLFW_MOUSE_BUTTON_LEFT:
+		if (action == GLFW_PRESS) {
+			engine->get_hunter()->shoot();
+		}
 	}
 
 	return;

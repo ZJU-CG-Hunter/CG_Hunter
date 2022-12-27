@@ -50,6 +50,12 @@
     <ClInclude Include="include\HTree.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="include\HPig.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HBullet.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shader\vs\skybox.vert">
@@ -122,6 +128,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\HTree.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HPig.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HBullet.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

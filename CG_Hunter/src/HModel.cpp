@@ -2,10 +2,11 @@
 #include <HMap.h>
 
 // constructor, expects a filepath to a 3D model.
-HModel::HModel(string const& path, bool gamma) : gammaCorrection(gamma)
+HModel::HModel(string const& path, bool gamma, int default_animation_index) : gammaCorrection(gamma), animation_index(default_animation_index)
 {
   genModelBuffer();
   loadModel(path);
+  genModelCollider();
 }
 
 HModel::~HModel() {
@@ -28,7 +29,7 @@ void HModel::Draw()
 
   // Bind WVP
   glm::mat4 identity(1.0f);
-  glm::mat4 model = glm::translate(identity, position) * glm::mat4_cast(rotation) * glm::scale(identity, scaling);
+  glm::mat4 model = GetPositionMat() * GetRotationMat() * GetScalingMat();
   BindUniformData(buffer_offset, &model);
 
   // Bind projection and view
@@ -47,8 +48,12 @@ void HModel::Draw()
     meshes[i].Draw(shader);
   }
 
-
 }
+
+Model_Type HModel::get_model_type() {
+  return model_type;
+}
+
 
 void HModel::DrawBox(HShader* shader) {
   
@@ -61,7 +66,7 @@ HShader* HModel::get_current_shader() {
 
 void HModel::UpdateColliderTransform() {
   glm::mat4 identity(1.0f);
-  glm::mat4 model = glm::translate(identity, position) * glm::mat4_cast(rotation) * glm::scale(identity, scaling);
+  glm::mat4 model = GetPositionMat() * GetRotationMat() * GetScalingMat();
 
   for (int i = 0; i < meshes.size(); i++) {
     meshes[i].mesh_transform_mat = glm::mat4(0.0f);
@@ -73,24 +78,19 @@ void HModel::UpdateColliderTransform() {
 }
 
 void HModel::Action(HMap* map, float duration_time) {
-  if(scene->mNumAnimations >0){
-    animation_index = 0;
-    CalCurrentTicks(duration_time);
-  }
-
-  UpdateBoneTransform();
-  UpdateColliderTransform();
-  AdjustStepOnGround(map);
-  map->update_model(this);
+  cout << "This is HModel Action, Not implemented!" << endl;
 }
 
-void HModel::Event(Events event) {
+void HModel::Event(Events* event) {
   //cout << "Not implemented, always ignore" << endl;
 }
 
 void HModel::UpdateBoneTransform() {
-  /* Update the bone matrix */
-  setBoneTransform_ini(shader);
+  if (animation_index == INVALID_ANIMATION_INDEX || animation_index >= scene->mNumAnimations)
+    return;
+  glm::mat4 identity(1.0f);
+  setBoneTransform_recursive(scene->mRootNode, identity);
+  return;
 }
 
 void HModel::AdjustStepOnGround(HMap* map) {
@@ -104,7 +104,7 @@ void HModel::AdjustStepOnGround(HMap* map) {
 void HModel::CalCurrentTicks(float duration_time) {
   float animation_duration = scene->mAnimations[animation_index]->mDuration;
   float animation_ticks_per_second = scene->mAnimations[animation_index]->mTicksPerSecond;
-  animation_ticks = fmod((animation_ticks + duration_time * animation_ticks_per_second), animation_duration);
+  animation_ticks = animation_ticks + duration_time * animation_ticks_per_second;
 }
 
 
@@ -118,8 +118,8 @@ void HModel::SetPosition(const glm::vec3& position_vec) {
   position = position_vec;
 }
 
-void HModel::SetRotation(const glm::quat& rotation_quat) {
-  rotation = rotation_quat;
+void HModel::SetRotation(const glm::vec3& rotation_vec) {
+  rotation = rotation_vec;
 }
 
 void HModel::SetScaling(const glm::vec3& scaling_vec) {
@@ -133,16 +133,13 @@ glm::mat4 HModel::GetPositionMat() {
 }
 
 glm::mat4 HModel::GetRotationMat() {
-  return glm::mat4_cast(rotation);
+  glm::vec3 radians_roation(glm::radians(rotation.x), glm::radians(rotation.y), glm::radians(rotation.z));
+  return glm::mat4_cast(glm::quat(radians_roation));
 }
 
 glm::mat4 HModel::GetScalingMat() {
   glm::mat4 identity(1.0f);
   return glm::scale(identity, scaling);
-}
-
-bool HModel::is_need_detect_collision() {
-  return engine_detect_collision;
 }
 
 void HModel::set_need_detect_collision(bool flag) {
@@ -157,8 +154,8 @@ void HModel::loadModel(string const& path)
   scene = importer->ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 
   // used for debug
-  cout << "Number of animations: " << scene->mNumAnimations << endl;
-  cout << "Scene Pointer: " << scene << endl;
+  //cout << "Number of animations: " << scene->mNumAnimations << endl;
+  //cout << "Scene Pointer: " << scene << endl;
 
   // check for errors
   if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
@@ -179,7 +176,7 @@ void HModel::loadModel(string const& path)
 
   // process ASSIMP's root node recursively
   processNode(scene->mRootNode);
-  cout << "In loadModel() Animations num: " << scene->mNumAnimations << endl;
+  //cout << "In loadModel() Animations num: " << scene->mNumAnimations << endl;
 
 
 
@@ -196,6 +193,8 @@ void HModel::BindCamera(HCamera* model_camera) {
 void HModel::genModelCollider() {
   vector<vector<float>> v;
 
+  animation_ticks = 0;
+  UpdateBoneTransform();
   for (int i = 0; i < meshes.size(); i++) {
     for (int j = 0; j < meshes[i].vertices.size(); j++) {
       glm::vec3 position = meshes[i].vertices[j].Position;
@@ -222,13 +221,13 @@ void HModel::genModelCollider() {
 // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
 void HModel::processNode(aiNode* node)
 {
-  cout << "Number of Mesh: " << node->mNumMeshes << endl;
+  //cout << "Number of Mesh: " << node->mNumMeshes << endl;
   // process each mesh located at the current node
   for (unsigned int i = 0; i < node->mNumMeshes; i++)
   {
     // the node object only contains indices to index the actual objects in the scene. 
     // the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
-    cout << "current_mesh: " << i << endl;
+    //cout << "current_mesh: " << i << endl;
 
 
     aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
@@ -238,10 +237,10 @@ void HModel::processNode(aiNode* node)
   }
   // after we've processed all of the meshes (if any) we then recursively process each of the children nodes
   
-  cout << "Number of children: " << node->mNumChildren << endl;
+  //cout << "Number of children: " << node->mNumChildren << endl;
   for (unsigned int i = 0; i < node->mNumChildren; i++)
   {
-    cout << "Current child: " << i << endl;
+    //cout << "Current child: " << i << endl;
     processNode(node->mChildren[i]);
   }
 }
@@ -413,18 +412,12 @@ HMesh HModel::processMesh(aiMesh* mesh)
   return HMesh(vertices, indices, textures, mesh_ini_collider, mesh_bone, mesh_name);
 }
 
-HCollider* HModel::get_collider() {
-  genModelCollider();
-  return collider;
-}
 
 vector<HMesh>& HModel::get_meshes() {
   return meshes;
 }
 
 
-  // checks all material textures of a given type and loads the textures if they're not loaded yet.
-  // the required info is returned as a Texture struct.
 vector<Texture> HModel::loadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName)
 {
   vector<Texture> textures;
@@ -434,7 +427,7 @@ vector<Texture> HModel::loadMaterialTextures(aiMaterial* mat, aiTextureType type
     mat->GetTexture(type, i, &str);
     // check if texture was loaded before and if so, continue to next iteration: skip loading a new texture
 
-    cout << "texturestr:" << str.C_Str() << endl;
+    //cout << "texturestr:" << str.C_Str() << endl;
 
     bool skip = false;
     for (unsigned int j = 0; j < textures_loaded.size(); j++)
@@ -457,22 +450,6 @@ vector<Texture> HModel::loadMaterialTextures(aiMaterial* mat, aiTextureType type
     }
   }
   return textures;
-}
-
-void HModel::setBoneTransform_ini(HShader* shader) {
-  if (animation_index == INVALID_ANIMATION_INDEX || animation_index >= scene->mNumAnimations)
-    return;
-
-  // used for debug 
-  //cout << "In draw() Animations num: " << scene->mNumAnimations << endl;
-  //cout << "In draw() Scene Pointer: " << scene << endl
-
-  glm::mat4 identity(1.0f);
-  // used for debug
-  // cout << "animation_time: " << animation_time << endl;
-  setBoneTransform_recursive(scene->mRootNode, identity);
-
-  return;
 }
 
 void HModel::setBoneTransform_recursive(const aiNode* current_node, const glm::mat4 parent_transform) {
@@ -667,12 +644,12 @@ glm::mat4 HModel::aimat_to_glmmat(aiMatrix3x3 ai_matrix) {
 
 unsigned int HModel::TextureFromFile(const char* path, const string& directory, bool gamma)
 {
-  cout << "path:" << path << endl;
+  //cout << "path:" << path << endl;
 
   string filename = string(path);
   filename = directory + '/' + filename;
 
-  cout << "filename: " << filename << endl;
+  //cout << "filename: " << filename << endl;
 
   unsigned int textureID;
   glGenTextures(1, &textureID);
@@ -716,5 +693,152 @@ void HModel::genModelBuffer() {
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
+Collision* HModel::get_collide_type(HModel* model1, HModel* model2)
+{
+  bool collide_bool = false;
+  vector<int> model_1_meshes_index, model_2_meshes_index;
 
+  collide_bool = if_collide(model1->get_collider(), model2->get_collider());
+
+  return new Collision(collide_bool, model1, model2, model_1_meshes_index, model_2_meshes_index);
+}
+
+bool HModel::if_collide(vector<glm::vec3> Points1, vector<glm::vec3> Points2)
+{
+  glm::vec3 fs[6];
+
+  int plane[6][4] = { {0,1,3,2},{0,1,5,4},{0,2,6,4},{7,6,2,3},{5,7,3,1},{5,7,6,4} };
+
+  fs[0] = glm::normalize(Points1[1] - Points1[0]);
+  fs[1] = glm::normalize(Points1[2] - Points1[0]);
+  fs[2] = glm::normalize(Points1[4] - Points1[0]);
+  fs[3] = glm::normalize(Points2[1] - Points2[0]);
+  fs[4] = glm::normalize(Points2[2] - Points2[0]);
+  fs[5] = glm::normalize(Points2[4] - Points2[0]);
+
+  int flagtime = 0;
+  int flag = true;
+  for (size_t i = 0; i < 6; i++)
+  {
+    for (size_t j = i + 1; j < 6; j++) {
+
+      flagtime = 0;
+      flag = true;
+      for (size_t i1 = 0; i1 < 6; i1++)
+      {
+        for (size_t j1 = 0; j1 < 6; j1++) {
+          glm::vec2 p1[4];
+          glm::vec2 p2[4];
+          for (size_t p = 0; p < 4; p++)
+          {
+            glm::vec2 v1 = glm::vec2(glm::dot(Points1[plane[i1][p]], fs[i]), glm::dot(Points1[plane[i1][p]], fs[j]));
+            p1[p] = v1;
+            glm::vec2 v2 = glm::vec2(glm::dot(Points2[plane[j1][p]], fs[i]), glm::dot(Points2[plane[j1][p]], fs[j]));
+            p2[p] = v2;
+
+          }
+          if (!inspection_2D(p1, p2))
+          {
+            flag = false;
+            break;
+          }
+          else flagtime++;
+        }
+
+        if (!flag) break;
+      }
+      if (flagtime == 36)
+      {
+        return false;
+      }
+    }
+  }
+  return true;
+
+}
+
+bool HModel::inspection_2D(glm::vec2* p1, glm::vec2* p2)
+{
+  glm::vec2 fs[4];
+
+
+  glm::vec2 temp1 = glm::vec2(p1[1][1] - p1[0][1], p1[0][0] - p1[1][0]);
+  fs[0] = glm::normalize(temp1);
+
+  glm::vec2 temp2 = glm::vec2(p1[3][1] - p1[0][1], p1[0][0] - p1[3][0]);
+  fs[1] = glm::normalize(temp2);
+
+  glm::vec2 temp3 = glm::vec2(p2[1][1] - p2[0][1], p2[0][0] - p2[1][0]);
+  fs[2] = glm::normalize(temp3);
+
+  glm::vec2 temp4 = glm::vec2(p2[3][1] - p2[0][1], p2[0][0] - p2[3][0]);
+  fs[3] = glm::normalize(temp4);
+
+
+  for (size_t i = 0; i < 4; i++)
+  {
+    double p1_min, p1_max;
+    double p2_min, p2_max;
+    for (size_t j = 0; j < 4; j++) {
+      if (j == 0)
+      {
+        p1_min = glm::dot(p1[0], fs[i]);
+        p1_max = glm::dot(p1[0], fs[i]);
+      }
+      else
+      {
+        if (glm::dot(p1[j], fs[i]) > p1_max)
+        {
+          p1_max = glm::dot(p1[j], fs[i]);
+        }
+
+        if (glm::dot(p1[j], fs[i]) < p1_min)
+        {
+          p1_min = glm::dot(p1[j], fs[i]);
+        }
+      }
+    }
+    for (size_t j = 0; j < 4; j++) {
+      if (j == 0)
+      {
+        p2_min = glm::dot(p2[0], fs[i]);
+        p2_max = glm::dot(p2[0], fs[i]);
+      }
+      else
+      {
+        if (glm::dot(p2[j], fs[i]) > p2_max)
+        {
+          p2_max = glm::dot(p2[j], fs[i]);
+        }
+
+        if (glm::dot(p2[j], fs[i]) < p2_min)
+        {
+          p2_min = glm::dot(p2[j], fs[i]);
+        }
+      }
+    }
+
+    if (p1_max < p2_min || p2_max < p1_min)
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+void HModel::collision_detection(HMap* map) {
+  cout << "This is HModel collision detection, Not implemented" << endl;
+}
+
+vector<glm::vec3> HModel::get_collider() {
+  vector<glm::vec3> ret_points;
+
+  glm::mat4 wvp = GetPositionMat() * GetRotationMat() * GetScalingMat();
+
+  for (int i = 0; i < 8; i++) {
+    ret_points.emplace_back(glm_vec4_to_glm_vec3(wvp * glm::vec4(collider->get_Points(i), 1.0f)));
+  }
+
+  return ret_points;
+}
 

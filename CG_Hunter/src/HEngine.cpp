@@ -12,78 +12,6 @@ GLFWwindow* HEngine::get_window_ptr(const int index) {
 	return _windows[index];
 }
 
-void HEngine::setup_magnifier() {
-	double pi = 3.1415926;
-	double c = pi / 180;
-	glm::vec3 a[721];
-	int index = 0;
-	for (size_t i = 0; i < 360; i++)
-	{
-		glm::vec3 temp1(0.8 * cos(c * i), 0.8 * sin(c * i), 0);
-		a[index++] = temp1;
-
-		if (i >= 315 || i < 45)
-		{
-			glm::vec3 temp2(1, tan(c * i), 0);
-			a[index++] = temp2;
-		}
-		else if (i >= 45 && i < 135)
-		{
-			glm::vec3 temp2(1 / tan(c * i), 1, 0);
-			a[index++] = temp2;
-		}
-		else if (i >= 135 && i < 225)
-		{
-			glm::vec3 temp2(-1, -tan(c * i), 0);
-			a[index++] = temp2;
-		}
-		else if (i >= 225 && i < 315)
-		{
-			glm::vec3 temp2(-1 / tan(c * i), -1, 0);
-			a[index++] = temp2;
-		}
-	}
-
-	vector<float> cross_mag{
-		-1.0, 0.95, 0.0,
-		0.0, 0.0, 0.0,
-		-0.95, 1.0, 0.0,
-
-		1.0, 0.95, 0.0,
-		0.0, 0.0, 0.0,
-		0.95, 1.0, 0.0,
-
-		-1.0, -0.95, 0.0,
-		0.0, 0.0, 0.0,
-		-0.95, -1.0, 0.0,
-
-		1.0, -0.95, 0.0,
-		0.0, 0.0, 0.0,
-		0.95, -1.0, 0.0,
-	};
-
-	for (int i = 0; i < 719; i++)
-		for (int j = 0; j < 3; j++)
-			for (int k = 0; k < 3; k++)
-				magnifier_vertices.emplace_back(a[i + j][k]);
-	for (int i = 0; i < cross_mag.size(); i++)
-		magnifier_vertices.emplace_back(cross_mag[i]);
-
-
-	glGenVertexArrays(1, &magnifier_VAO);
-	glGenBuffers(1, &magnifier_VBO);
-	glBindVertexArray(magnifier_VAO);
-
-
-	glBindBuffer(GL_ARRAY_BUFFER, magnifier_VBO);
-	glBufferData(GL_ARRAY_BUFFER, magnifier_vertices.size() * sizeof(float), &magnifier_vertices[0], GL_STATIC_DRAW);
-
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
-
-	magnifier_shader = new HShader("./resources/shader/vs/magnifier.vert", "./resources/shader/fs/magnifier.frag");
-}
-
 void HEngine::setup_depthMap() {
 	glGenFramebuffers(1, &depthMapFBO);
 	glGenTextures(1, &depthMap);
@@ -135,7 +63,10 @@ void HEngine::draw_shadow() {
 	HShader* old_shaders;
 	for (int i = 0; i < _models.size(); i++) {
 		old_shaders = _models[i]->get_current_shader();
-		_models[i]->BindShader(shadow_depth_shader);
+		if(_models[i]->get_model_type() != Model_Type::Bullet)
+			_models[i]->BindShader(shadow_depth_shader);
+		else 
+			_models[i]->BindShader(shadow_depth_shader_tree);
 		_models[i]->Draw();
 		_models[i]->BindShader(old_shaders);
 		//cout << "TT" << endl;
@@ -228,25 +159,6 @@ void HEngine::set_cursor_hide(int window_index) {
 
 }
 
-void HEngine::draw_magnifier() {
-	if (_is_magnifier_draw) {
-		magnifier_shader->use();
-		glBindVertexArray(magnifier_VAO);
-		glDrawArrays(GL_TRIANGLES, 0, magnifier_vertices.size());
-		glBindVertexArray(0);
-	}
-}
-
-void HEngine::is_draw_magnifier(bool flag) {
-	_is_magnifier_draw = flag;
-	if (flag)
-		_cameras[_current_camera]->Zoom = ZOOM - 25.0f;
-	else
-		_cameras[_current_camera]->Zoom = ZOOM;
-}
-
-
-
 void HEngine::set_window_inputmode(int window_index, int mode, int value) {
 	check_splited(window_index, _windows);
 	glfwSetInputMode(_windows[window_index], mode, value);
@@ -264,8 +176,8 @@ HShader* HEngine::get_shader(int shader_index) {
 	return _shaders[shader_index];
 }
 
-void HEngine::create_map(string const& path) {
-	_map = new HMap(path);
+void HEngine::create_map(string const& path, unsigned int map_seed) {
+	_map = new HMap(path, map_seed);
 }
 
 HMap* HEngine::get_map() {
@@ -337,14 +249,28 @@ HSkybox* HEngine::get_skybox(int skybox_index) {
 }
 
 
-void HEngine::insert_model(string const& path, bool gamma) {
-	HModel* created_model = new HModel(path, gamma);
-
+void HEngine::insert_model(string const& path, bool gamma, Model_Type model_type) {
+	HModel* created_model;
+	switch (model_type) {
+	case Model_Type::Unknown:
+		created_model = new HModel(path, gamma);
+		_map->insert_model(created_model);
+		created_model->AdjustStepOnGround(_map);
+		break;
+	case Model_Type::Pig:
+		created_model = new HPig(path, gamma);
+		_map->insert_model(created_model);
+		created_model->AdjustStepOnGround(_map);
+		break;
+	case Model_Type::Bullet:
+		created_model = new HBullet(path, gamma);
+		break;
+	}
 	_models.emplace_back(created_model);
+}
 
-	_map->insert_model(created_model);
-
-	created_model->AdjustStepOnGround(_map);
+void HEngine::remove_model(int index) {
+	_models.erase(_models.begin() + index);
 }
 
 HModel* HEngine::get_model(int model_index) {
@@ -398,25 +324,12 @@ void HEngine::processInput() {
 
 void HEngine::collision_detection() {
 	vector<Model_Data> nearby;
-
-	if (_hunter->is_need_detect_collision()) {
-		nearby.clear();
-		nearby = _map->get_model_nearby(_hunter, 5.0f);
-
-		for (int i = 0; i < nearby.size(); i++) {
-			if(nearby[i]._adjust_pos)
-				nearby[i]._model->SetPosition(*nearby[i]._adjust_pos);
-
-			Collision collision_type = get_collide_type(_hunter, nearby[i]._model);
-			_hunter->Event(collision_type);
-			nearby[i]._model->Event(collision_type);
-		}
-	}
+	_hunter->collision_detection(_map);
 	
-
+	for (int i = 0; i < _models.size(); i++) {
+		_models[i]->collision_detection(_map);
+	}
 }
-
-
 
 void HEngine::clear_buffer() {
 	glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
@@ -459,7 +372,7 @@ void HEngine::run() {
 		/* render skybox */
 		_skybox[_current_skybox]->Draw();
 
-		draw_magnifier();
+		_hunter->DrawMagnifier();
 
 
 		/* swap buffers and poll IO events */
@@ -524,169 +437,4 @@ void HEngine::check_splited(int index, vector<T> vec) {
 		cout << "ERROR::HENGINE::SPLITED:: the index given: " << index << " is splited. Current size: " << vec.size() << endl;
 		assert(0);
 	}
-}
-
-Collision HEngine::get_collide_type(HModel* model1, HModel* model2)
-{
-	bool collide_bool = false;
-	vector<int> model_1_meshes_index, model_2_meshes_index;
-
-	HCollider* a = model1->get_collider();
-	HCollider* b = model2->get_collider();
-
-	vector<glm::vec3> Points1(8);
-	vector<glm::vec3> Points2(8);
-
-	glm::mat4 wvp1 = model1->GetPositionMat() * model1->GetRotationMat() * model1->GetScalingMat();
-	glm::mat4 wvp2 = model2->GetPositionMat() * model2->GetRotationMat() * model2->GetScalingMat();
-
-	/*cout << "min_x: " << model2->min_x << "max_x: " << model2->max_x << "min_y: " << model2->min_y << "max_y: " << model2->max_y << "min_z: " << model2->min_z << "max_z: " << model2->max_z << endl;
-
-	for (int i = 0; i < 8; i++)
-		cout << "Ini:Points1: " << a->get_Points(i).x << ", " << a->get_Points(i).y << ", " << a->get_Points(i).z << endl;
-	for (int i = 0; i < 8; i++)
-		cout << "Ini:Points2: " << b->get_Points(i).x << ", " << b->get_Points(i).y << ", " << b->get_Points(i).z << endl;*/
-
-	for (int i = 0; i < 8; i++) {
-		Points1[i] = glm_vec4_to_glm_vec3(wvp1 * glm::vec4(a->get_Points(i), 1.0f));
-		Points2[i] = glm_vec4_to_glm_vec3(wvp2 * glm::vec4(b->get_Points(i), 1.0f));
-	}
-
-	//show_mat4(wvp1, "wvp1");
-	//show_mat4(wvp2, "wvp2");
-	//for(int i = 0; i<8; i++)
-	//	cout << "Points1: " << Points1[i].x << ", " << Points1[i].y << ", " << Points1[i].z << endl;
-	//for(int i = 0; i<8; i++)
-	//	cout << "Points2: " << Points2[i].x << ", " << Points2[i].y << ", " << Points2[i].z << endl;
-	
-	collide_bool = if_collide(Points1, Points2);
-	
-	if(collide_bool)
-	 cout << "Big Box detection" << endl;
-	return Collision(collide_bool, model1, model2, model_1_meshes_index, model_2_meshes_index);
-}
-
-
-
-bool HEngine::if_collide(vector<glm::vec3> Points1, vector<glm::vec3> Points2)
-{
-	glm::vec3 fs[6];
-
-	int plane[6][4] = { {0,1,3,2},{0,1,5,4},{0,2,6,4},{7,6,2,3},{5,7,3,1},{5,7,6,4} };
-
-	fs[0] = glm::normalize(Points1[1] - Points1[0]);
-	fs[1] = glm::normalize(Points1[2] - Points1[0]);
-	fs[2] = glm::normalize(Points1[4] - Points1[0]);
-	fs[3] = glm::normalize(Points2[1] - Points2[0]);
-	fs[4] = glm::normalize(Points2[2] - Points2[0]);
-	fs[5] = glm::normalize(Points2[4] - Points2[0]);
-
-	int flagtime = 0;
-	int flag = true;
-	for (size_t i = 0; i < 6; i++)
-	{
-		for (size_t j = i + 1; j < 6; j++) {
-
-			flagtime = 0;
-			flag = true;
-			for (size_t i1 = 0; i1 < 6; i1++)
-			{
-				for (size_t j1 = 0; j1 < 6; j1++) {
-					glm::vec2 p1[4];
-					glm::vec2 p2[4];
-					for (size_t p = 0; p < 4; p++)
-					{
-						glm::vec2 v1 = glm::vec2(glm::dot(Points1[plane[i1][p]], fs[i]), glm::dot(Points1[plane[i1][p]], fs[j]));
-						p1[p] = v1;
-						glm::vec2 v2 = glm::vec2(glm::dot(Points2[plane[j1][p]], fs[i]), glm::dot(Points2[plane[j1][p]], fs[j]));
-						p2[p] = v2;
-
-					}
-					if (!inspection_2D(p1, p2))
-					{
-						flag = false;
-						break;
-					}
-					else flagtime++;
-				}
-
-				if (!flag) break;
-			}
-			if (flagtime == 36)
-			{
-				return false;
-			}
-		}
-	}
-	return true;
-
-}
-
-bool HEngine::inspection_2D(glm::vec2* p1, glm::vec2* p2)
-{
-	glm::vec2 fs[4];
-
-
-	glm::vec2 temp1 = glm::vec2(p1[1][1] - p1[0][1], p1[0][0] - p1[1][0]);
-	fs[0] = glm::normalize(temp1);
-
-	glm::vec2 temp2 = glm::vec2(p1[3][1] - p1[0][1], p1[0][0] - p1[3][0]);
-	fs[1] = glm::normalize(temp2);
-
-	glm::vec2 temp3 = glm::vec2(p2[1][1] - p2[0][1], p2[0][0] - p2[1][0]);
-	fs[2] = glm::normalize(temp3);
-
-	glm::vec2 temp4 = glm::vec2(p2[3][1] - p2[0][1], p2[0][0] - p2[3][0]);
-	fs[3] = glm::normalize(temp4);
-
-
-	for (size_t i = 0; i < 4; i++)
-	{
-		double p1_min, p1_max;
-		double p2_min, p2_max;
-		for (size_t j = 0; j < 4; j++) {
-			if (j == 0)
-			{
-				p1_min = glm::dot(p1[0], fs[i]);
-				p1_max = glm::dot(p1[0], fs[i]);
-			}
-			else
-			{
-				if (glm::dot(p1[j], fs[i]) > p1_max)
-				{
-					p1_max = glm::dot(p1[j], fs[i]);
-				}
-
-				if (glm::dot(p1[j], fs[i]) < p1_min)
-				{
-					p1_min = glm::dot(p1[j], fs[i]);
-				}
-			}
-		}
-		for (size_t j = 0; j < 4; j++) {
-			if (j == 0)
-			{
-				p2_min = glm::dot(p2[0], fs[i]);
-				p2_max = glm::dot(p2[0], fs[i]);
-			}
-			else
-			{
-				if (glm::dot(p2[j], fs[i]) > p2_max)
-				{
-					p2_max = glm::dot(p2[j], fs[i]);
-				}
-
-				if (glm::dot(p2[j], fs[i]) < p2_min)
-				{
-					p2_min = glm::dot(p2[j], fs[i]);
-				}
-			}
-		}
-
-		if (p1_max < p2_min || p2_max < p1_min)
-		{
-			return true;
-		}
-	}
-	return false;
 }

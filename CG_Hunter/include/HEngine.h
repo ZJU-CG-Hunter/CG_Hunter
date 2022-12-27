@@ -13,6 +13,8 @@
 #include <HSkybox.h>
 #include <HMap.h>
 #include <HHunter.h>
+#include <HPig.h>
+#include <HBullet.h>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H  
@@ -58,14 +60,6 @@ protected:
 	float _lastY;
 	bool _firstMouse;
 
-	bool _is_magnifier_draw = false;
-
-	unsigned int magnifier_VAO = 0;
-	unsigned int magnifier_VBO = 0;
-	HShader* magnifier_shader;
-	vector<float> magnifier_vertices;
-
-
 	unsigned int depthMap;
 	unsigned int depthMapFBO;
 
@@ -106,7 +100,7 @@ public:
 	HShader* get_shader(int shader_index);
 
 	/* Create a map */
-	void create_map(string const& path);
+	void create_map(string const& path, unsigned int map_seed);
 
 	/* Return the map */
 	HMap* get_map();
@@ -117,9 +111,13 @@ public:
 	/* Return the map */
 	HHunter* get_hunter();
 
-	void insert_model(string const& path, bool gamma);
+	void insert_model(string const& path, bool gamma, Model_Type model_type = Model_Type::Unknown);
 
 	HModel* get_model(int model_index);
+
+	void hunter_shoot();
+
+	void remove_model(int index);
 
 	/* Insert a new camera */
 	void insert_camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
@@ -153,23 +151,10 @@ public:
 	/* Set firstmosue */
 	void set_firstmouse(bool firstMouse);
 
-	void setup_magnifier();
-
 	/* process all input */
 	virtual void processInput();
 
-	/* Collide */
-	Collision get_collide_type(HModel* model1, HModel* model2);
-
-	bool if_collide(vector<glm::vec3> Points1, vector<glm::vec3> Points2);
-
-	bool inspection_2D(glm::vec2* p1, glm::vec2* p2);
-
 	void collision_detection();
-
-	void draw_magnifier();
-
-	void is_draw_magnifier(bool flag);
 
 	void setup_depthMap();
 

@@ -44,8 +44,9 @@ private:
 
 	int y_range;
 
+	unsigned int _map_seed;
 public:
-	HMap(string const& path);
+	HMap(string const& path, unsigned int map_seed = 0);
 	
 	void Draw();
 
@@ -62,6 +63,10 @@ public:
 	vector<Model_Data> get_model_nearby(HModel* model, float range = DEFALUT_NEARBY_RANGE);
 
 	float get_height(float x, float y);
+
+	float get_map_width();
+
+	float get_map_height();
 
 private:
 	void gen_height_map();

@@ -1,7 +1,7 @@
 #include <HTree.h>
 
 HTree::HTree(string const& path, bool gamma): HModel(path, gamma), num(0) {
-  glGenBuffers(1, &instanceVBO);
+  model_type = Model_Type::Tree;
 }
 
 void HTree::set_models(vector<glm::mat4> models) {
@@ -64,8 +64,6 @@ void HTree::Draw() {
       glBindTexture(GL_TEXTURE_2D, meshes[k].textures[i].id);
     }
 
-
-
     // draw mesh
     glBindVertexArray(meshes[k].VAO);
     glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(meshes[k].indices.size()), GL_UNSIGNED_INT, 0, num);
@@ -78,4 +76,18 @@ void HTree::Draw() {
 
 void HTree::set_num(int count) {
   num = count;
+}
+
+vector<glm::vec3> HTree::get_collider() {
+  vector<glm::vec3> ret_points;
+
+  glm::mat4 shrink_collider = glm::scale(glm::mat4(1.0f), glm::vec3(0.3f, 1.0f, 0.3f));
+
+  glm::mat4 wvp = GetPositionMat() * shrink_collider * GetRotationMat() * GetScalingMat();
+
+  for (int i = 0; i < 8; i++) {
+    ret_points.emplace_back(glm_vec4_to_glm_vec3(wvp * glm::vec4(collider->get_Points(i), 1.0f)));
+  }
+
+  return ret_points;
 }

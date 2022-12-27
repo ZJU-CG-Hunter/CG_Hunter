@@ -2,7 +2,7 @@
 
 /* ---------------------------------------------Public Method -----------------------------------------------*/
 
-HMap::HMap(string const& path){
+HMap::HMap(string const& path, unsigned int map_seed): _map_seed(map_seed) {
 	_map_model = new HModel(path, false);
 	gen_height_map();
 
@@ -118,11 +118,19 @@ vector<Model_Data> HMap::get_model_nearby(HModel* model, float range) {
 	return ret;
 }
 
+float HMap::get_map_width() {
+	return _map_width;
+}
+
+float HMap::get_map_height() {
+	return _map_height;
+}
+
 
 /* ---------------------------------------------Private Method -----------------------------------------------*/
 void HMap::adjust_map_size() {
 	_map_model->SetScaling(glm::vec3(Scale_X, Scale_Y, Scale_Z));
-	_map_model->SetRotation(glm::quat(glm::highp_vec3(glm::radians(-90.0f), 0.0f, 0.0f)));
+	_map_model->SetRotation(glm::vec3(- 90.0f, 0.0f, 0.0f));
 	_map_model->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 	_map_width = Scale_X * 2;
 	_map_height = Scale_Y * 2;
@@ -135,7 +143,7 @@ void HMap::gen_height_map() {
 	for (int i = 0; i < _map_model->meshes.size(); i++)
 		vertex_num += _map_model->meshes[i].vertices.size();
 
-	cout << "Vertex_num: " << vertex_num << endl;
+	//cout << "Vertex_num: " << vertex_num << endl;
 
 	float ratio = (_map_model->max_x - _map_model->min_x) / (_map_model->max_y - _map_model->min_y);
 	y_range = pow((vertex_num / ratio), 0.45);
@@ -163,7 +171,7 @@ void HMap::gen_height_map() {
 }
 
 void HMap::gen_landscape() {
-	srand((unsigned int)glfwGetTime());
+	srand(_map_seed);
 	/* Gen Grass, Trees */
 	string path = "./resources/model/map_model/map_tree";
 
@@ -171,7 +179,7 @@ void HMap::gen_landscape() {
 		_landscapes.emplace_back(new HTree(path + to_string(i) + ".fbx", false));
 
 	for (int i = 0; i < _landscapes.size(); i++) {
-		_landscapes[i]->SetRotation(glm::quat(glm::highp_vec3(glm::radians(-90.0f), glm::radians((float)(rand()%90)), 0.0f)));
+		_landscapes[i]->SetRotation(glm::vec3(-90.0f, 0.0f, 0.0f));
 		_landscapes[i]->SetScaling(glm::vec3(0.05f, 0.05f, 0.08f));
 	}
 
@@ -272,6 +280,8 @@ void HMap::fill_height_map() {
 	}
 
 }
+
+
 
 
 

@@ -3,9 +3,9 @@
 
 class HTree : public HModel {
 protected:
-	unsigned int instanceVBO;
 	unsigned int num;
 	vector<glm::mat4> models;
+
 public:
 	void set_models(vector<glm::mat4> models);
 
@@ -14,4 +14,7 @@ public:
 	void Draw();
 
 	void set_num(int count);
+
+	vector<glm::vec3> get_collider();
+
 };

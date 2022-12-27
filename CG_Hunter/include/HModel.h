@@ -28,9 +28,10 @@ using namespace std;
 
 enum class Model_Type {
   Pig,
-  Deer,
+  Sheep,
   Hunter,
-  Arrow,
+  Bullet,
+  Tree,
   Unknown
 };
 
@@ -96,7 +97,7 @@ protected:
   float animation_ticks;
 
   glm::vec3 position;
-  glm::quat rotation;
+  glm::vec3 rotation;
   glm::vec3 scaling;
 
   HCollider* collider;
@@ -118,7 +119,7 @@ public:
   float min_z, max_z;
 
   // constructor, expects a filepath to a 3D model.
-  HModel(string const& path, bool gamma);
+  HModel(string const& path, bool gamma, int default_animation_index = INVALID_ANIMATION_INDEX);
 
   ~HModel();
 
@@ -132,6 +133,8 @@ public:
   // draws the model, and thus all its meshes
   virtual void Draw();
 
+  Model_Type get_model_type();
+
   void DrawBox(HShader* shader);
 
   void BindShader(HShader* model_shader);
@@ -142,17 +145,17 @@ public:
 
   virtual void Action(HMap* map, float duration_time);
 
-  virtual void Event(Events event);
+  virtual void Event(Events* event);
 
   HShader* get_current_shader();
 
-  HCollider* get_collider();
+  virtual vector<glm::vec3> get_collider();
 
   vector<HMesh>& get_meshes();
 
   void SetPosition(const glm::vec3& position_vec);
 
-  void SetRotation(const glm::quat& rotation_quat);
+  void SetRotation(const glm::vec3&);
 
   void SetScaling(const glm::vec3& scaling_vec);
 
@@ -162,9 +165,9 @@ public:
 
   glm::mat4 GetScalingMat();
 
-  bool is_need_detect_collision();
-
   void set_need_detect_collision(bool flag);
+
+  virtual void collision_detection(HMap* map);
 
 protected:
   void genModelCollider();
@@ -182,8 +185,6 @@ protected:
   HMesh processMesh(aiMesh* mesh);
 
   vector<Texture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName);
-
-  void setBoneTransform_ini(HShader* shader);
 
   void setBoneTransform_recursive(const aiNode* current_node, const glm::mat4 parent_transform);
 
@@ -211,6 +212,12 @@ protected:
   glm::mat4 aimat_to_glmmat(aiMatrix3x3 ai_matrix);
 
   unsigned int TextureFromFile(const char* path, const string& directory, bool gamma = false);
+
+  Collision* get_collide_type(HModel* model1, HModel* model2);
+
+  bool if_collide(vector<glm::vec3> Points1, vector<glm::vec3> Points2);
+
+  bool inspection_2D(glm::vec2* p1, glm::vec2* p2);
 };
 
 #endif

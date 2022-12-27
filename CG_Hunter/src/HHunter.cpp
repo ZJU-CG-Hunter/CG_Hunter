@@ -1,23 +1,102 @@
 #include <HHunter.h>
+#include <HMap.h>
 
+int default_hunter_animation_index = 0;
 
-HHunter::HHunter(string const& path, const glm::vec3 front, const glm::vec3 up, const glm::vec3 right, const glm::vec3 worldup, float yaw, float pitch) : HModel(path, false) {
+HHunter::HHunter(string const& path, const glm::vec3 front, const glm::vec3 up, const glm::vec3 right, const glm::vec3 worldup, float yaw, float pitch) : HModel(path, false, default_hunter_animation_index) {
 	Front = front;
 	Up = up;
 	Right = right;
 	WorldUp = worldup;
 	Yaw = yaw;
 	Pitch = pitch;
-}
 
-void HHunter::Event(Collision event) {
-	if (event._is_collide) {
-		cout << "Collision happens!" << endl;
-		position = last_position;
+	double pi = 3.1415926;
+	double c = pi / 180;
+	glm::vec3 a[721];
+	int index = 0;
+	for (size_t i = 0; i < 360; i++)
+	{
+		glm::vec3 temp1(0.8 * cos(c * i), 0.8 * sin(c * i), 0);
+		a[index++] = temp1;
+
+		if (i >= 315 || i < 45)
+		{
+			glm::vec3 temp2(1, tan(c * i), 0);
+			a[index++] = temp2;
+		}
+		else if (i >= 45 && i < 135)
+		{
+			glm::vec3 temp2(1 / tan(c * i), 1, 0);
+			a[index++] = temp2;
+		}
+		else if (i >= 135 && i < 225)
+		{
+			glm::vec3 temp2(-1, -tan(c * i), 0);
+			a[index++] = temp2;
+		}
+		else if (i >= 225 && i < 315)
+		{
+			glm::vec3 temp2(-1 / tan(c * i), -1, 0);
+			a[index++] = temp2;
+		}
 	}
 
+	vector<float> cross_mag{
+		-1.0, 0.95, 0.0,
+		0.0, 0.0, 0.0,
+		-0.95, 1.0, 0.0,
+
+		1.0, 0.95, 0.0,
+		0.0, 0.0, 0.0,
+		0.95, 1.0, 0.0,
+
+		-1.0, -0.95, 0.0,
+		0.0, 0.0, 0.0,
+		-0.95, -1.0, 0.0,
+
+		1.0, -0.95, 0.0,
+		0.0, 0.0, 0.0,
+		0.95, -1.0, 0.0,
+	};
+
+	for (int i = 0; i < 719; i++)
+		for (int j = 0; j < 3; j++)
+			for (int k = 0; k < 3; k++)
+				magnifier_vertices.emplace_back(a[i + j][k]);
+	for (int i = 0; i < cross_mag.size(); i++)
+		magnifier_vertices.emplace_back(cross_mag[i]);
+
+	glGenVertexArrays(1, &magnifier_VAO);
+	glGenBuffers(1, &magnifier_VBO);
+	glBindVertexArray(magnifier_VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, magnifier_VBO);
+	glBufferData(GL_ARRAY_BUFFER, magnifier_vertices.size() * sizeof(float), &magnifier_vertices[0], GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 }
 
+void HHunter::Action(HMap* map, float duration_time) {
+	UpdateBoneTransform();
+	//UpdateColliderTransform();
+	AdjustStepOnGround(map);
+	map->update_model(this);
+	update_camera();
+}
+
+void HHunter::Event(Events* event) {
+	switch (event->_event_type) {
+	case Event_Type::Collision:
+		Collision* collision_event = reinterpret_cast<Collision*>(event);
+		HModel* another_model = collision_event->_model_1 == this ? collision_event->_model_2 : collision_event->_model_1;
+		if (collision_event->_is_collide && another_model->get_model_type() != Model_Type::Bullet){
+			//cout << "Collision happens!" << endl;
+			position = last_position;
+		}
+	}
+}
 
 void HHunter::move(Camera_Movement dirention, float deltaTime) {
 	float velocity = MovementSpeed * deltaTime;
@@ -43,8 +122,6 @@ void HHunter::move(Camera_Movement dirention, float deltaTime) {
 	update_camera();
 }
 
-
-
 void HHunter::turn(float xoffset, float yoffset) {
 	xoffset *= MouseSensitivity;
 	yoffset *= MouseSensitivity;
@@ -66,7 +143,7 @@ void HHunter::turn(float xoffset, float yoffset) {
 	Right = glm::normalize(glm::cross(Front, WorldUp));
 	Up = glm::normalize(glm::cross(Right, Front));
 
-	rotation = glm::rotate(glm::mat4_cast(rotation), glm::radians(-xoffset), glm::vec3(0.0, 1.0, 0.0));
+	rotation.y -= xoffset;
 
 	camera->Front = Front;
 	camera->Up = Up;
@@ -77,13 +154,65 @@ void HHunter::turn(float xoffset, float yoffset) {
 }
 
 void HHunter::update_camera(){
-	glm::vec3 back = glm::cross(Right, WorldUp);
-	back = glm::normalize(back);
-	camera->Position = position + back * glm::vec3(8.0f, 8.0f, 8.0f) + WorldUp * glm::vec3(5.0f, 5.0f, 5.0f);
+	if (!is_aim) {
+		glm::vec3 back = glm::cross(Right, WorldUp);
+		back = glm::normalize(back);
+		camera->Position = position + back * glm::vec3(8.0f, 8.0f, 8.0f) + WorldUp * glm::vec3(8.0f, 8.0f, 8.0f);
+	}
+	else {
+		camera->Position = position + Front * glm::vec3(5.0f, 5.0f, 5.0f);
+	}
 }
 
 glm::vec3 HHunter::get_position() {
 	return position;
 }
 
+void HHunter::collision_detection(HMap* _map) {
+	vector<Model_Data> nearby;
+
+	if (engine_detect_collision) {
+		nearby = _map->get_model_nearby(this, 5.0f);
+
+		for (int i = 0; i < nearby.size(); i++) {
+			if (nearby[i]._adjust_pos)
+				nearby[i]._model->SetPosition(*nearby[i]._adjust_pos);
+
+			Collision* collision_type = get_collide_type(this, nearby[i]._model);
+			this->Event(collision_type);
+			nearby[i]._model->Event(collision_type);
+			delete collision_type;
+		}
+	}
+}
+
+void HHunter::BindGun(HModel* gun) {
+	this->gun = reinterpret_cast<HBullet*>(gun);
+}
+
+void HHunter::aim(bool is_aim) {
+	this->is_aim = is_aim;
+	if (is_aim)
+		camera->Zoom = ZOOM - 15.0f;
+	else
+		camera->Zoom = ZOOM;
+}
+
+void HHunter::shoot() {
+	glm::vec3 gum_position = position + Front * glm::vec3(5.0f, 5.0f, 5.0f);
+	gun->insert_bullet(bullet(gum_position, camera->Front, 1.0f));
+}
+
+void HHunter::BindMagnifierShader(HShader* magnifier_shader) {
+	this->magnifier_shader = magnifier_shader;
+}
+
+void HHunter::DrawMagnifier() {
+	if (is_aim) {
+		magnifier_shader->use();
+		glBindVertexArray(magnifier_VAO);
+		glDrawArrays(GL_TRIANGLES, 0, magnifier_vertices.size());
+		glBindVertexArray(0);
+	}
+}
 
