@@ -4,7 +4,6 @@
 
 HHunter::HHunter(string const& path, const glm::vec3 front, const glm::vec3 up, const glm::vec3 right, const glm::vec3 worldup, float yaw, float pitch) : HModel(path, false, Hunter_Idle) {
 
-	cout << "Num: " << scene->mNumAnimations << endl;
 
 	Front = front;
 	Up = up;
@@ -12,6 +11,9 @@ HHunter::HHunter(string const& path, const glm::vec3 front, const glm::vec3 up, 
 	WorldUp = worldup;
 	Yaw = yaw;
 	Pitch = pitch;
+
+	soul_shoot = 15;
+	soul_shoot_cnt = 0;
 
 	double pi = 3.1415926;
 	double c = pi / 180;
@@ -82,8 +84,6 @@ HHunter::HHunter(string const& path, const glm::vec3 front, const glm::vec3 up, 
 }
 
 void HHunter::Action(HMap* map, float duration_time) {
-
-
 	switch (animation_index) {
 	case INVALID_ANIMATION_INDEX:
 		cout << "Invalid_animation_index" << endl;
@@ -97,6 +97,17 @@ void HHunter::Action(HMap* map, float duration_time) {
 		CalCurrentTicks(duration_time);
 		// Iterative do this
 		animation_ticks = fmod(animation_ticks, scene->mAnimations[animation_index]->mDuration);
+		break;
+	case Hunter_Shoot_Up:
+		CalCurrentTicks(duration_time * 0.7);
+		if (animation_ticks >= scene->mAnimations[animation_index]->mDuration) {
+			animation_ticks = scene->mAnimations[animation_index]->mDuration - 0.01f;
+		}
+		break;
+	case Hunter_Shoot_Down:
+		CalCurrentTicks(duration_time * 0.7);
+		if (animation_ticks >= scene->mAnimations[animation_index]->mDuration)
+			animation_ticks = scene->mAnimations[animation_index]->mDuration - 0.01f;
 		break;
 	}
 	UpdateBoneTransform();
@@ -142,7 +153,8 @@ void HHunter::move(Camera_Movement dirention, float deltaTime) {
 }
 
 void HHunter::idle() {
-	animation_index = Hunter_Idle;
+	if(animation_index == Hunter_Run)
+		animation_index = Hunter_Idle;
 }
 
 
@@ -178,14 +190,19 @@ void HHunter::turn(float xoffset, float yoffset) {
 }
 
 void HHunter::update_camera(){
-	if (!is_aim) {
-		glm::vec3 back = glm::cross(Right, WorldUp);
-		back = glm::normalize(back);
-		camera->Position = position + back * glm::vec3(8.0f, 8.0f, 8.0f) + WorldUp * glm::vec3(8.0f, 8.0f, 8.0f);
+	if (is_aim) {
+		camera->Position = position + Front * glm::vec3(1.5f, 1.5f, 1.5f) + WorldUp * glm::vec3(7.0f, 7.0f, 7.0f);
+		return;
 	}
-	else {
-		camera->Position = position + Front * glm::vec3(5.0f, 5.0f, 5.0f);
+	else if (animation_index == Hunter_Shoot_Up) {
+		camera->Position = position + Front * glm::vec3(1.5f, 1.5f, 1.5f) + WorldUp * glm::vec3(7.0f, 7.0f, 7.0f);
+		return;
 	}
+
+	glm::vec3 back = glm::cross(Right, WorldUp);
+	back = glm::normalize(back);
+	camera->Position = position + back * glm::vec3(8.0f, 8.0f, 8.0f) + WorldUp * glm::vec3(8.0f, 8.0f, 8.0f);
+
 }
 
 void HHunter::collision_detection(HMap* _map) {
@@ -219,13 +236,14 @@ void HHunter::aim(bool is_aim) {
 }
 
 void HHunter::shoot() {
-	glm::vec3 gum_position = position + Front * glm::vec3(5.0f, 5.0f, 5.0f);
+	glm::vec3 gum_position = position + Front * glm::vec3(2.5f, 2.5f, 2.5f) + WorldUp * glm::vec3(7.0f, 7.0f, 7.0f);
 
 	glm::vec3 radians_roation1(0.0f, glm::radians(-Yaw), 0.0f);
 	glm::vec3 radians_roation2(0.0f, 0.0f, glm::radians(Pitch));
 
 	//gun->insert_bullet(bullet(gum_position, camera->Front, glm::mat4_cast(glm::quat(radians_roation)), 1.0f));
 	gun->insert_bullet(bullet(gum_position, camera->Front, glm::mat4_cast(glm::quat(radians_roation1)) * glm::mat4_cast(glm::quat(radians_roation2)), 5.0f));
+
 }
 
 void HHunter::BindMagnifierShader(HShader* magnifier_shader) {
@@ -246,7 +264,7 @@ void HHunter::shoot_ready(bool up_down) {
 		animation_index = Hunter_Shoot_Up;
 	}
 	else {
-
+		animation_index = Hunter_Shoot_Down;
 	}
 }
 

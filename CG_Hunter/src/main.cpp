@@ -46,7 +46,7 @@ int main() {
 	engine->create_map("./resources/map/map10fbx.fbx", map_seed);
 
 	/* Create new hunter */
-	engine->create_hunter("./resources/model/hunter3.fbx", glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.0f);
+	engine->create_hunter("./resources/model/hunter6.fbx", glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.0f);
 	engine->get_hunter()->SetScaling(glm::vec3(0.0004f, 0.0004f, 0.0004f)); // Set model scaling
 	engine->get_hunter()->SetRotation(glm::vec3(0.0f, 90.0f, 0.0f));
 	engine->get_hunter()->SetPosition(glm::vec3(0.0, 20.0, 0.0));
@@ -177,6 +177,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		break;
 	case GLFW_MOUSE_BUTTON_2:
 		engine->get_hunter()->shoot_ready((bool)action);
+		break;
 	}
 
 	return;

@@ -3,10 +3,10 @@
 #include <HModel.h>
 #include <HBullet.h>
 
-const int Hunter_Run = 7; // 0
-const int Hunter_Idle = 6; 
-const int Hunter_Shoot_Up = 3;
-const int Hunter_Shoot_Down = 9;
+const int Hunter_Run = 3; 
+const int Hunter_Idle = 2; 
+const int Hunter_Shoot_Up = 4; 
+const int Hunter_Shoot_Down = 7; 
 
 class HHunter : public HModel {
 private:
@@ -23,6 +23,9 @@ private:
   glm::vec3 last_position;
 
   HBullet* gun;
+
+  int soul_shoot;
+  int soul_shoot_cnt;
 
   bool is_aim = false;
 
