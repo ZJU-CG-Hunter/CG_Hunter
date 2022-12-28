@@ -309,14 +309,26 @@ void HEngine::processInput() {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) 
+	bool is_press = false;
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
 		_hunter->move(Camera_Movement::FORWARD, _deltatime);
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		is_press = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
 		_hunter->move(Camera_Movement::BACKWARD, _deltatime);
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		is_press = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 		_hunter->move(Camera_Movement::LEFT, _deltatime);
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		is_press = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
 		_hunter->move(Camera_Movement::RIGHT, _deltatime);
+		is_press = true;
+	}
+
+	if(!is_press)
+		_hunter->idle();
 
 	_map->update_model(_hunter);
 

@@ -46,9 +46,9 @@ int main() {
 	engine->create_map("./resources/map/map10fbx.fbx", map_seed);
 
 	/* Create new hunter */
-	engine->create_hunter("./resources/model/hunter.fbx", glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.0f);
-	engine->get_hunter()->SetScaling(glm::vec3(0.03f, 0.03f, 0.03f)); // Set model scaling
-	engine->get_hunter()->SetRotation(glm::vec3(-90.0f, 90.0f, 0.0f));
+	engine->create_hunter("./resources/model/hunter3.fbx", glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.0f);
+	engine->get_hunter()->SetScaling(glm::vec3(0.0004f, 0.0004f, 0.0004f)); // Set model scaling
+	engine->get_hunter()->SetRotation(glm::vec3(0.0f, 90.0f, 0.0f));
 	engine->get_hunter()->SetPosition(glm::vec3(0.0, 20.0, 0.0));
 
 	/* Create new skybox */
@@ -57,16 +57,27 @@ int main() {
 
 
 	/* Create model */
-	engine->insert_model("./resources/model/Pig.fbx", false, Model_Type::Pig);
-	engine->get_model(0)->SetPosition(glm::vec3(10.0, 0.0, 10.0));
-	engine->get_model(0)->SetScaling(glm::vec3(0.01f, 0.01f, 0.01f));
-	engine->get_map()->update_model(engine->get_model(0));
-	
-	engine->insert_model("./resources/model/bullet.fbx", false, Model_Type::Bullet);
-	engine->get_model(1)->SetScaling(glm::vec3(0.3f, 0.3f, 0.3f));
-	engine->get_model(1)->SetRotation(glm::vec3(-90.0f, 0.0f, 0.0f));
+	int model_num = 0;
+	engine->insert_model("./resources/model/bullet2.fbx", false, Model_Type::Bullet);
+	engine->get_model(0)->SetScaling(glm::vec3(0.03f, 0.03f, 0.03f));
+	engine->get_model(0)->SetRotation(glm::vec3(-90.0f, -90.0f, 0.0f));
+	model_num++;
 
+	int pig_model_index_base = model_num;
+	float map_width = engine->get_map()->get_map_width();
+	float map_height = engine->get_map()->get_map_height();
 
+	for (int i = 0; i < PIG_NUM; i++) {
+		engine->insert_model("./resources/model/Pig.fbx", false, Model_Type::Pig);
+
+		float ini_x = float(rand() % int(map_width) - map_width/2);
+		float ini_z = float(rand() % int(map_height) - map_height/2);
+		engine->get_model(pig_model_index_base + i)->SetPosition(glm::vec3(ini_x, 0.0, ini_z));
+		engine->get_model(pig_model_index_base + i)->SetRotation(glm::vec3(0.0f, -90.0f, 0.0f));
+		engine->get_model(pig_model_index_base + i)->SetScaling(glm::vec3(0.01f, 0.01f, 0.01f));
+		engine->get_map()->update_model(engine->get_model(pig_model_index_base + i));
+		model_num++;
+	}
 	//engine->insert_model("./resources/model/Sheep.fbx", false);
 	//engine->get_model(0)->SetPosition(glm::vec3(0.0, 0.0, 0.0));
 	//engine->get_model(0)->SetScaling(glm::vec3(0.1f, 0.1f, 0.1f));
@@ -80,22 +91,23 @@ int main() {
 	engine->get_hunter()->BindCamera(engine->get_camera(0));
 	engine->get_hunter()->BindShaderUniformBuffer(biding_point++);
 	engine->get_hunter()->set_need_detect_collision(true);
-	engine->get_hunter()->BindGun(engine->get_model(1));
+	engine->get_hunter()->BindGun(engine->get_model(0));
 
 	engine->get_skybox(0)->BindShader(engine->get_shader(1));
 	engine->get_skybox(0)->BindCamera(engine->get_camera(0));
 	engine->get_skybox(0)->BindShaderUniformBuffer(biding_point++);
-
-	engine->get_model(0)->BindShader(engine->get_shader(0));
+	
+	engine->get_model(0)->BindShader(engine->get_shader(2));
 	engine->get_model(0)->BindCamera(engine->get_camera(0));
 	engine->get_model(0)->BindShaderUniformBuffer(biding_point++);
-	engine->get_model(0)->set_need_detect_collision(false);
+	engine->get_model(0)->set_need_detect_collision(true);
 
-
-	engine->get_model(1)->BindShader(engine->get_shader(2));
-	engine->get_model(1)->BindCamera(engine->get_camera(0));
-	engine->get_model(1)->BindShaderUniformBuffer(biding_point++);
-	engine->get_model(1)->set_need_detect_collision(true);
+	for (int i = 0; i < PIG_NUM; i++) {
+		engine->get_model(pig_model_index_base + i)->BindShader(engine->get_shader(0));
+		engine->get_model(pig_model_index_base + i)->BindCamera(engine->get_camera(0));
+		engine->get_model(pig_model_index_base + i)->BindShaderUniformBuffer(biding_point++);
+		engine->get_model(pig_model_index_base + i)->set_need_detect_collision(true);
+	}
 
 	engine->get_map()->get_map_model()->BindShader(engine->get_shader(0));
 	engine->get_map()->get_map_model()->BindCamera(engine->get_camera(0));

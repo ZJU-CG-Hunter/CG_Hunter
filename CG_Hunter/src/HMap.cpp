@@ -45,9 +45,18 @@ float HMap::get_height(float x, float y) {
 	return height;
 }
 
-void HMap::insert_model(HModel* model) {
-	float x = model->position.x;
-	float y = model->position.z;
+void HMap::insert_model(HModel* model, glm::vec3* adjust_position) {
+	float x = 0;
+	float y = 0;
+
+	if (adjust_position) {
+		x = adjust_position->x;
+		y = adjust_position->z;
+	}
+	else {
+		x = model->position.x;
+		y = model->position.z;
+	}
 
 	int map_x = (x + _map_width / 2) / _map_width * x_range;
 	int map_y = (-y + _map_height / 2) / _map_height * y_range;
@@ -55,7 +64,7 @@ void HMap::insert_model(HModel* model) {
 	if (map_x<0 || map_x>x_range || map_y<0 || map_y>y_range)
 		return;
 	else {
-		_map_data[map_y][map_x]._models.emplace_back(Model_Data(model, nullptr));
+		_map_data[map_y][map_x]._models.emplace_back(Model_Data(model, adjust_position));
 		model->map_x = map_x;
 		model->map_y = map_y;
 	}
@@ -65,9 +74,17 @@ void HMap::insert_model(HModel* model) {
 	return;
 }
 
-void HMap::remove_model(HModel* model) {
-	int map_x = model->map_x;
-	int map_y = model->map_y;
+void HMap::remove_model(HModel* model, glm::vec3* last_position) {
+	int map_x = -1;
+	int map_y = -1;
+	if (last_position) {
+		map_x = (last_position->x + _map_width / 2) / _map_width * x_range;
+		map_y = (-last_position->z + _map_height / 2) / _map_height * y_range;
+	}
+	else {
+		map_x = model->map_x;
+		map_y = model->map_y;
+	}
 
 	if (map_x<0 || map_x>x_range || map_y<0 || map_y>y_range)
 		return;
@@ -80,16 +97,13 @@ void HMap::remove_model(HModel* model) {
 		}
 		model->map_x = -1;
 		model->map_y = -1;
-	}
-		
-			
+	}		
 	return;
 }
 
-void HMap::update_model(HModel* model) {
-	remove_model(model);
-	insert_model(model);
-	
+void HMap::update_model(HModel* model, glm::vec3* adjust_position, glm::vec3* last_position) {
+	remove_model(model, last_position);
+	insert_model(model, adjust_position);
 }
 
 

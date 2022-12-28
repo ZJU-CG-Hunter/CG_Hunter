@@ -3,6 +3,9 @@
 #include <HModel.h>
 #include <HBullet.h>
 
+const int Hunter_Run = 7;
+const int Hunter_Idle = 6;
+
 class HHunter : public HModel {
 private:
   glm::vec3 Front;
@@ -35,11 +38,11 @@ public:
 
   void move(Camera_Movement dirention, float deltaTime);
 
+  void idle();
+
   void turn(float xoffset, float yoffset);
 
   void update_camera();
-
-  glm::vec3 get_position();
 
   void collision_detection(HMap* _map);
 

@@ -53,6 +53,18 @@ public:
 
 };
 
+class Observation : public Events {
+public:
+  HModel* _model_1;
+  HModel* _model_2;
+
+
+  Observation(HModel* model1, HModel* model2) : Events(Event_Type::Observation) {
+    _model_1 = model1;
+    _model_2 = model2;
+  }
+};
+
 struct BoneData {
   glm::mat4 bone_offset;
   glm::mat4 bone_transform;
@@ -158,6 +170,8 @@ public:
   void SetRotation(const glm::vec3&);
 
   void SetScaling(const glm::vec3& scaling_vec);
+
+  glm::vec3 get_position();
 
   glm::mat4 GetPositionMat();
 

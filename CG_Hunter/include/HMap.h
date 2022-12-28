@@ -52,11 +52,11 @@ public:
 
 	HModel* get_map_model();
 
-	void insert_model(HModel* model);
+	void insert_model(HModel* model, glm::vec3* adjust_position = nullptr);
 
-	void remove_model(HModel* model);
+	void remove_model(HModel* model, glm::vec3* last_position = nullptr);
 
-	void update_model(HModel* model);
+	void update_model(HModel* model, glm::vec3* adjust_position = nullptr, glm::vec3* last_position = nullptr);
 
 	vector<HTree*> get_landscape();
 

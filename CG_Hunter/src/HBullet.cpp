@@ -10,7 +10,7 @@ void HBullet::Draw() {
   string model_str = "model[";
   vector<glm::mat4> models(_bullets.size());
   for (int i = 0; i < models.size(); i++) {
-    models[i] = glm::translate(glm::mat4(1.0f), _bullets[i]._current_position) * GetRotationMat() * GetScalingMat();
+    models[i] = glm::translate(glm::mat4(1.0f), _bullets[i]._current_position) * _bullets[i]._rotation * GetRotationMat() * GetScalingMat();
     shader->setMat4(model_str + to_string(i) + "]", models[i]);
   }
 
@@ -98,7 +98,6 @@ void HBullet::collision_detection(HMap* _map) {
   if (engine_detect_collision) {
     for (int i = 0; i < _bullets.size(); i++) {
       _current_bullet = i;
-      _is_current_bullet_collide = false;
       SetPosition(_bullets[i]._current_position);
       nearby = _map->get_model_nearby(this, 8.0f);
 
@@ -110,19 +109,33 @@ void HBullet::collision_detection(HMap* _map) {
         this->Event(collision_type);
         nearby[j]._model->Event(collision_type);
         delete collision_type;
-        if (_is_current_bullet_collide)
+        if (!_bullets[i]._exist)
           break;
       }
+      nearby.clear();
+      nearby = _map->get_model_nearby(this, 3.0f);
+
+      for (int j = 0; j < nearby.size(); j++) {
+        if (nearby[j]._adjust_pos)
+          nearby[j]._model->SetPosition(*nearby[j]._adjust_pos);
+        
+        Observation* observation_type = new Observation(this, nearby[j]._model);
+        this->Event(observation_type);
+        nearby[j]._model->Event(observation_type);
+        delete observation_type;
+      }
+      }
     }
-  }
-}
+ }
 
 void HBullet::Action(HMap* map, float duration_time) {
+  //cout << "_bullets size: " << _bullets.size() << endl;
   for (int i = 0; i < _bullets.size(); i++) {
     _bullets[i]._last_position = _bullets[i]._current_position;
     _bullets[i]._current_position += _bullets[i]._direction * _bullets[i]._speed;
-    if (fabs(_bullets[i]._current_position.x) > map->get_map_width() / 2 || fabs(_bullets[i]._current_position.z) > map->get_map_height() / 2 || fabs(_bullets[i]._current_position.y) > 500.0f)
+    if (fabs(_bullets[i]._current_position.x) > map->get_map_width() / 2 || fabs(_bullets[i]._current_position.z) > map->get_map_height() / 2 || fabs(_bullets[i]._current_position.y) > 2000.0f || _bullets[i]._exist == false) {
       _bullets.erase(_bullets.begin() + i);
+    }
   }
   //UpdateColliderTransform();
 }
@@ -133,8 +146,7 @@ void HBullet::Event(Events* event) {
     Collision* collision_event = reinterpret_cast<Collision*>(event);
     HModel* another_model = collision_event->_model_1 == this ? collision_event->_model_2 : collision_event->_model_1;
     if (collision_event->_is_collide && another_model->get_model_type() != Model_Type::Hunter) {
-      _bullets.erase(_bullets.begin() + _current_bullet);
-      _is_current_bullet_collide = true;
+      _bullets[_current_bullet]._exist = false;
     }
   }
 }

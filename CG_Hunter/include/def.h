@@ -6,7 +6,7 @@
 // Default camera values
 const float YAW = -90.0f;
 const float PITCH = 0.0f;
-const float SPEED = 5.0f;
+const float SPEED = 15.0f;
 const float SENSITIVITY = 0.1f;
 const float ZOOM = 45.0f;
 
@@ -39,9 +39,9 @@ const float DEFAULT_MAP_LENGTH = 1000;
 
 const float INVALID_HEIGHT = -100000.0f;
 
-const float Scale_X = 200.0f;
-const float Scale_Y = 200.0f;
-const float Scale_Z = 200.0f;
+const float Scale_X = 400.0f;
+const float Scale_Y = 400.0f;
+const float Scale_Z = 400.0f;
 
 const int land_x_range = 3;
 const int land_y_range = 3;
@@ -58,11 +58,13 @@ const unsigned int BINDING_POINT_MODEL_BASE = 2;
 
 const unsigned int DEPTH_MAP_TEXTURE = 14;
 
-const int LANDSCAPE_NUM = 400;
+const int LANDSCAPE_NUM = 800;
+
+const float PIG_NUM = 10;
 
 enum class Event_Type {
   Collision,
-  Watching,
+  Observation,
   Picking,
   Unknown
 };

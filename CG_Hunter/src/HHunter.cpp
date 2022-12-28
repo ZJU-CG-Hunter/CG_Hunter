@@ -1,9 +1,8 @@
 #include <HHunter.h>
 #include <HMap.h>
 
-int default_hunter_animation_index = 0;
 
-HHunter::HHunter(string const& path, const glm::vec3 front, const glm::vec3 up, const glm::vec3 right, const glm::vec3 worldup, float yaw, float pitch) : HModel(path, false, default_hunter_animation_index) {
+HHunter::HHunter(string const& path, const glm::vec3 front, const glm::vec3 up, const glm::vec3 right, const glm::vec3 worldup, float yaw, float pitch) : HModel(path, false, Hunter_Idle) {
 	Front = front;
 	Up = up;
 	Right = right;
@@ -76,9 +75,22 @@ HHunter::HHunter(string const& path, const glm::vec3 front, const glm::vec3 up, 
 
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
 }
 
 void HHunter::Action(HMap* map, float duration_time) {
+	switch (animation_index) {
+	case INVALID_ANIMATION_INDEX:
+		cout << "Invalid_animation_index" << endl;
+		assert(0);
+	case Hunter_Run:
+		CalCurrentTicks(duration_time);
+		// Iterative do this
+		animation_ticks = fmod(animation_ticks, scene->mAnimations[animation_index]->mDuration);
+		break;
+	case Hunter_Idle:
+		break;
+	}
 	UpdateBoneTransform();
 	//UpdateColliderTransform();
 	AdjustStepOnGround(map);
@@ -116,11 +128,17 @@ void HHunter::move(Camera_Movement dirention, float deltaTime) {
 		position += Right * velocity;
 		break;
 	}
-
-	//cout << "current_pos: " << position.x << " " << position.y << " " << position.z << endl;
+	animation_index = Hunter_Run;
 
 	update_camera();
 }
+
+void HHunter::idle() {
+	animation_index = Hunter_Idle;
+	animation_ticks = 0;
+
+}
+
 
 void HHunter::turn(float xoffset, float yoffset) {
 	xoffset *= MouseSensitivity;
@@ -164,10 +182,6 @@ void HHunter::update_camera(){
 	}
 }
 
-glm::vec3 HHunter::get_position() {
-	return position;
-}
-
 void HHunter::collision_detection(HMap* _map) {
 	vector<Model_Data> nearby;
 
@@ -200,7 +214,12 @@ void HHunter::aim(bool is_aim) {
 
 void HHunter::shoot() {
 	glm::vec3 gum_position = position + Front * glm::vec3(5.0f, 5.0f, 5.0f);
-	gun->insert_bullet(bullet(gum_position, camera->Front, 1.0f));
+
+	glm::vec3 radians_roation1(0.0f, glm::radians(-Yaw), 0.0f);
+	glm::vec3 radians_roation2(0.0f, 0.0f, glm::radians(Pitch));
+
+	//gun->insert_bullet(bullet(gum_position, camera->Front, glm::mat4_cast(glm::quat(radians_roation)), 1.0f));
+	gun->insert_bullet(bullet(gum_position, camera->Front, glm::mat4_cast(glm::quat(radians_roation1)) * glm::mat4_cast(glm::quat(radians_roation2)), 5.0f));
 }
 
 void HHunter::BindMagnifierShader(HShader* magnifier_shader) {

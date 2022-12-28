@@ -126,6 +126,9 @@ void HModel::SetScaling(const glm::vec3& scaling_vec) {
   scaling = scaling_vec;
 }
 
+glm::vec3 HModel::get_position() {
+  return position;
+}
 
 glm::mat4 HModel::GetPositionMat() {
   glm::mat4 identity(1.0f);
