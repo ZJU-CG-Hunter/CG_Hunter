@@ -3,8 +3,10 @@
 #include <HModel.h>
 #include <HBullet.h>
 
-const int Hunter_Run = 7;
-const int Hunter_Idle = 6;
+const int Hunter_Run = 7; // 0
+const int Hunter_Idle = 6; 
+const int Hunter_Shoot_Up = 3;
+const int Hunter_Shoot_Down = 9;
 
 class HHunter : public HModel {
 private:
@@ -55,4 +57,6 @@ public:
   void BindMagnifierShader(HShader* magnifier_shader);
 
   void DrawMagnifier();
+
+  void shoot_ready(bool up_down);
 };

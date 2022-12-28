@@ -68,7 +68,7 @@ int main() {
 	float map_height = engine->get_map()->get_map_height();
 
 	for (int i = 0; i < PIG_NUM; i++) {
-		engine->insert_model("./resources/model/Pig.fbx", false, Model_Type::Pig);
+		engine->insert_model("./resources/model/Pig2.fbx", false, Model_Type::Pig);
 
 		float ini_x = float(rand() % int(map_width) - map_width/2);
 		float ini_z = float(rand() % int(map_height) - map_height/2);
@@ -167,13 +167,16 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
 	switch (button){
-	case GLFW_MOUSE_BUTTON_RIGHT:
+	case GLFW_MOUSE_BUTTON_5:
 		engine->get_hunter()->aim((bool)action);
 		break;
-	case GLFW_MOUSE_BUTTON_LEFT:
+	case GLFW_MOUSE_BUTTON_1:
 		if (action == GLFW_PRESS) {
 			engine->get_hunter()->shoot();
 		}
+		break;
+	case GLFW_MOUSE_BUTTON_2:
+		engine->get_hunter()->shoot_ready((bool)action);
 	}
 
 	return;

@@ -1,23 +1,26 @@
 #include <HPig.h>
 #include <HMap.h>
 
-HPig::HPig(string const& path, bool gamma): HModel(path, gamma, Pig_Idle), _is_alive(true), _is_dying(false) {
+HPig::HPig(string const& path, bool gamma): HModel(path, gamma, (rand()%2 == 0? Pig_Wander: Pig_Idle)), _is_alive(true), _is_dying(false) {
+
 	model_type = Model_Type::Pig;
   Front = glm::vec3(0.0f, 0.0f, -1.0f);
+  Up = glm::vec3(0.0f, 1.0f, 0.0f);
   WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
   Right = glm::vec3(1.0f, 0.0f, 0.0f);
   Yaw = 0.0f;
   Pitch = 0.0f;
   warning = 0.0f;
-  warning_wander = 200.0f;
-  warning_walk = 500.0f;
-  crazy = 2000.0f;
-  alert = 0.05;
+  warning_wander = 20.0f;
+  warning_walk = 50.0f;
+  crazy = 80.0f;
+  alert = 1.0F;
 
   glm::vec3 last_position;
 
+  //cout << "Pig animation_num: " << scene->mNumAnimations;
+
   /* Set a random initial direction */
-  turn(float(rand() % 360), 0.0f);
 }
 
 void HPig::Action(HMap* map, float duration_time) {
@@ -28,15 +31,16 @@ void HPig::Action(HMap* map, float duration_time) {
       animation_index = Pig_Wander;
     else if (warning > warning_walk && (animation_index == Pig_Idle || animation_index == Pig_Wander))
       animation_index = Pig_Walk;
-    else if (warning = crazy && animation_index != crazy)
+    else if (warning == crazy && animation_index != crazy)
       animation_index = Pig_Jump;
   }
 
   switch (animation_index) {
+
   case INVALID_ANIMATION_INDEX:
     cout << "Invalid_animation_index" << endl;
     assert(0);
-  case Pig_Walk:
+  case Pig_Wander:
     Forward(duration_time);
     CalCurrentTicks(duration_time);
     // Iterative do this
@@ -48,16 +52,10 @@ void HPig::Action(HMap* map, float duration_time) {
     // Iterative do this
     animation_ticks = fmod(animation_ticks, scene->mAnimations[animation_index]->mDuration);
     break;
-  case Pig_Wander:
-    Forward(duration_time);
-    CalCurrentTicks(duration_time);
-    // Iterative do this
-    animation_ticks = fmod(animation_ticks, scene->mAnimations[animation_index]->mDuration);
-    break;
   case Pig_Idle:
     break;
   case Pig_Die:
-    CalCurrentTicks(duration_time * 0.1);
+    CalCurrentTicks(duration_time);
     if (animation_ticks > scene->mAnimations[animation_index]->mDuration) {
       animation_ticks = scene->mAnimations[animation_index]->mDuration - 0.01f;
       _is_alive = false;
@@ -196,9 +194,6 @@ void HPig::collision_detection(HMap* _map) {
 void HPig::Forward(float deltaTime) {
   float MovementSpeed = Pig_Idle_Speed;
   switch (animation_index) {
-  case Pig_Walk:
-    MovementSpeed = Pig_Walk_Speed;
-    break;
   case Pig_Jump:
     MovementSpeed = Pig_Jump_Speed;
     break;
@@ -245,6 +240,7 @@ void HPig::warn(float influence) {
     warning = crazy;
   if (warning < 0)
     warning = 0;
+  cout << "current_warning: " << warning << endl;
 }
 
 

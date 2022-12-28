@@ -2,11 +2,11 @@
 
 #include <HModel.h>
 
-const int Pig_Walk = 0;
-const int Pig_Jump = 1;
-const int Pig_Wander = 2;
-const int Pig_Idle = 3;
-const int Pig_Die = 4;
+const int Pig_Walk = 5; // 1
+const int Pig_Jump = 1; // 1
+const int Pig_Wander = 5; //5
+const int Pig_Idle = 0; // 0
+const int Pig_Die = 2; // 2
 
 const float Pig_Idle_Speed = 0.0f;
 const float Pig_Wander_Speed = 5.0f;
@@ -32,7 +32,6 @@ private:
 	float warning;
 	float warning_wander;
 	float warning_walk;
-	float warning_borad;
 	float crazy;
 	float alert;
 

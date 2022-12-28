@@ -3,6 +3,9 @@
 
 
 HHunter::HHunter(string const& path, const glm::vec3 front, const glm::vec3 up, const glm::vec3 right, const glm::vec3 worldup, float yaw, float pitch) : HModel(path, false, Hunter_Idle) {
+
+	cout << "Num: " << scene->mNumAnimations << endl;
+
 	Front = front;
 	Up = up;
 	Right = right;
@@ -79,6 +82,8 @@ HHunter::HHunter(string const& path, const glm::vec3 front, const glm::vec3 up, 
 }
 
 void HHunter::Action(HMap* map, float duration_time) {
+
+
 	switch (animation_index) {
 	case INVALID_ANIMATION_INDEX:
 		cout << "Invalid_animation_index" << endl;
@@ -89,6 +94,9 @@ void HHunter::Action(HMap* map, float duration_time) {
 		animation_ticks = fmod(animation_ticks, scene->mAnimations[animation_index]->mDuration);
 		break;
 	case Hunter_Idle:
+		CalCurrentTicks(duration_time);
+		// Iterative do this
+		animation_ticks = fmod(animation_ticks, scene->mAnimations[animation_index]->mDuration);
 		break;
 	}
 	UpdateBoneTransform();
@@ -135,8 +143,6 @@ void HHunter::move(Camera_Movement dirention, float deltaTime) {
 
 void HHunter::idle() {
 	animation_index = Hunter_Idle;
-	animation_ticks = 0;
-
 }
 
 
@@ -232,6 +238,15 @@ void HHunter::DrawMagnifier() {
 		glBindVertexArray(magnifier_VAO);
 		glDrawArrays(GL_TRIANGLES, 0, magnifier_vertices.size());
 		glBindVertexArray(0);
+	}
+}
+
+void HHunter::shoot_ready(bool up_down) {
+	if (up_down) {
+		animation_index = Hunter_Shoot_Up;
+	}
+	else {
+
 	}
 }
 
