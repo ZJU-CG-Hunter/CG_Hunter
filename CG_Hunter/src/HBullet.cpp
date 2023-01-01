@@ -3,6 +3,7 @@
 
 HBullet::HBullet(string const& path, bool gamma): HModel(path, false) {
 	model_type = Model_Type::Bullet;
+  _soul_mode = false;
 }
 
 void HBullet::Draw() {
@@ -130,9 +131,14 @@ void HBullet::collision_detection(HMap* _map) {
 
 void HBullet::Action(HMap* map, float duration_time) {
   //cout << "_bullets size: " << _bullets.size() << endl;
+
   for (int i = 0; i < _bullets.size(); i++) {
     _bullets[i]._last_position = _bullets[i]._current_position;
-    _bullets[i]._current_position += _bullets[i]._direction * _bullets[i]._speed;
+    if (!_soul_mode)
+      _bullets[i]._current_position += _bullets[i]._direction * _bullets[i]._speed;
+    else
+      _bullets[i]._current_position += _bullets[i]._direction * _bullets[i]._speed * 0.001f;
+    
     if (fabs(_bullets[i]._current_position.x) > map->get_map_width() / 2 || fabs(_bullets[i]._current_position.z) > map->get_map_height() / 2 || fabs(_bullets[i]._current_position.y) > 2000.0f || _bullets[i]._exist == false) {
       _bullets.erase(_bullets.begin() + i);
     }
@@ -154,5 +160,14 @@ void HBullet::Event(Events* event) {
 void HBullet::insert_bullet(bullet insert_bullet) {
   _bullets.emplace_back(insert_bullet);
 }
+
+vector<bullet>& HBullet::get_bullet() {
+  return _bullets;
+}
+
+void HBullet::set_soul_mode(bool flag) {
+  _soul_mode = flag;
+}
+
 
 

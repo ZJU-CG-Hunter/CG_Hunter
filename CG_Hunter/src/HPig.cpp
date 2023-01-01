@@ -240,7 +240,4 @@ void HPig::warn(float influence) {
     warning = crazy;
   if (warning < 0)
     warning = 0;
-  cout << "current_warning: " << warning << endl;
 }
-
-

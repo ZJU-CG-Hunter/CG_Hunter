@@ -441,6 +441,8 @@ void HEngine::adjust_time() {
 	_currenttime = static_cast<float>(glfwGetTime());
 	_deltatime = _currenttime - _lasttime;
 	_lasttime = _currenttime;
+	if (_hunter->is_soul_shoot())
+		_deltatime *= _hunter->get_soul_slow();
 }
 
 template <class T>

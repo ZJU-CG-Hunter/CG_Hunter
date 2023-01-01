@@ -12,8 +12,9 @@ HHunter::HHunter(string const& path, const glm::vec3 front, const glm::vec3 up, 
 	Yaw = yaw;
 	Pitch = pitch;
 
-	soul_shoot = 15;
+	soul_shoot = 10;
 	soul_shoot_cnt = 0;
+	soul_slow = 0.001f;
 
 	double pi = 3.1415926;
 	double c = pi / 180;
@@ -190,7 +191,16 @@ void HHunter::turn(float xoffset, float yoffset) {
 }
 
 void HHunter::update_camera(){
-	if (is_aim) {
+	if (there_is_a_soul_shoot) {
+		for (int i = 0; i < gun->get_bullet().size(); i++) {
+			if (gun->get_bullet()[i]._is_soul_bullet && gun->get_bullet()[i]._exist) {
+				camera->Position = gun->get_bullet()[i]._current_position - gun->get_bullet()[i]._direction * glm::vec3(1.0f, 1.0f, 1.0f) + WorldUp * glm::vec3(1.0f, 1.0f, 1.0f);
+				return;
+			}
+		}
+		there_is_a_soul_shoot = false;
+	}
+	else if (is_aim) {
 		camera->Position = position + Front * glm::vec3(1.5f, 1.5f, 1.5f) + WorldUp * glm::vec3(7.0f, 7.0f, 7.0f);
 		return;
 	}
@@ -198,6 +208,7 @@ void HHunter::update_camera(){
 		camera->Position = position + Front * glm::vec3(1.5f, 1.5f, 1.5f) + WorldUp * glm::vec3(7.0f, 7.0f, 7.0f);
 		return;
 	}
+
 
 	glm::vec3 back = glm::cross(Right, WorldUp);
 	back = glm::normalize(back);
@@ -242,7 +253,17 @@ void HHunter::shoot() {
 	glm::vec3 radians_roation2(0.0f, 0.0f, glm::radians(Pitch));
 
 	//gun->insert_bullet(bullet(gum_position, camera->Front, glm::mat4_cast(glm::quat(radians_roation)), 1.0f));
-	gun->insert_bullet(bullet(gum_position, camera->Front, glm::mat4_cast(glm::quat(radians_roation1)) * glm::mat4_cast(glm::quat(radians_roation2)), 5.0f));
+	if (soul_shoot_cnt++ == soul_shoot) {
+		there_is_a_soul_shoot = true;
+		soul_shoot_cnt = 0;
+		cout << "Soul Time" << endl;
+	}
+	else {
+		there_is_a_soul_shoot = false;
+		gun->set_soul_mode(false);
+	}
+
+	gun->insert_bullet(bullet(gum_position, camera->Front, glm::mat4_cast(glm::quat(radians_roation1)) * glm::mat4_cast(glm::quat(radians_roation2)), 5.0f, there_is_a_soul_shoot));
 
 }
 
@@ -251,7 +272,7 @@ void HHunter::BindMagnifierShader(HShader* magnifier_shader) {
 }
 
 void HHunter::DrawMagnifier() {
-	if (is_aim) {
+	if (is_aim && !there_is_a_soul_shoot) {
 		magnifier_shader->use();
 		glBindVertexArray(magnifier_VAO);
 		glDrawArrays(GL_TRIANGLES, 0, magnifier_vertices.size());
@@ -267,4 +288,13 @@ void HHunter::shoot_ready(bool up_down) {
 		animation_index = Hunter_Shoot_Down;
 	}
 }
+
+bool HHunter::is_soul_shoot() {
+	return there_is_a_soul_shoot;
+}
+
+float HHunter::get_soul_slow() {
+	return soul_slow;
+}
+
 

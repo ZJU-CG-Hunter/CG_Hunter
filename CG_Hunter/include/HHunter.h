@@ -28,6 +28,8 @@ private:
   int soul_shoot_cnt;
 
   bool is_aim = false;
+  bool there_is_a_soul_shoot = false;
+  bool soul_slow;
 
   unsigned int magnifier_VAO = 0;
   unsigned int magnifier_VBO = 0;
@@ -62,4 +64,8 @@ public:
   void DrawMagnifier();
 
   void shoot_ready(bool up_down);
+
+  bool is_soul_shoot();
+
+  float get_soul_slow();
 };
